@@ -3018,8 +3018,7 @@ static int do_tmpfile(int dfd, struct filename *pathname,
 	if (error)
 		goto out2;
 	audit_inode(pathname, nd->path.dentry, 0);
-	/* Don't check for other permissions, the inode was just created */
-	error = may_open(&nd->path, MAY_OPEN, op->open_flag);
+	error = may_open(&nd->path, op->acc_mode, op->open_flag);
 	if (error)
 		goto out2;
 	file->f_path.mnt = nd->path.mnt;
@@ -3051,9 +3050,9 @@ static struct file *path_openat(int dfd, struct filename *pathname,
 
 	file->f_flags = op->open_flag;
 
-	if (unlikely(file->f_flags & __O_TMPFILE)) {
+	if (unlikely(file->f_flags & O_TMPFILE)) {
 		error = do_tmpfile(dfd, pathname, nd, flags, op, file, &opened);
-		goto out2;
+		goto out;
 	}
 
 	error = path_init(dfd, pathname->name, flags | LOOKUP_PARENT, nd, &base);
