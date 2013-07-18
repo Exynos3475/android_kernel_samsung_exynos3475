@@ -243,6 +243,12 @@ static void logi_dj_recv_add_djhid_device(struct dj_receiver_dev *djrcv_dev,
 		return;
 	}
 
+	if (djrcv_dev->paired_dj_devices[dj_report->device_index]) {
+		/* The device is already known. No need to reallocate it. */
+		dbg_hid("%s: device is already known\n", __func__);
+		return;
+	}
+
 	dj_hiddev = hid_allocate_device();
 	if (IS_ERR(dj_hiddev)) {
 		dev_err(&djrcv_hdev->dev, "%s: hid_allocate_device failed\n",
