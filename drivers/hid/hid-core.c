@@ -796,7 +796,7 @@ struct hid_report *hid_validate_values(struct hid_device *hid,
 	 * ->numbered being checked, which may not always be the case when
 	 * drivers go to access report values.
 	 */
-		report = hid->report_enum[type].report_id_hash[id];
+	report = hid->report_enum[type].report_id_hash[id];
 	if (!report) {
 		hid_err(hid, "missing %s %u\n", hid_report_names[type], id);
 		return NULL;
