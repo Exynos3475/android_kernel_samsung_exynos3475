@@ -4683,11 +4683,10 @@ static inline unsigned int hmp_domain_min_load(struct hmp_domain *hmpd,
 	struct cpumask temp_cpumask;
 	/*
 	 * only look at CPUs allowed if specified,
-	 * always consider online CPUs in the right HMP domain
+	 * otherwise look at all online CPUs in the
+	 * right HMP domain
 	 */
-	cpumask_and(&temp_cpumask, &hmpd->cpus, cpu_online_mask);
-	if (affinity)
-		cpumask_and(&temp_cpumask, &temp_cpumask, affinity);
+	cpumask_and(&temp_cpumask, &hmpd->cpus, affinity ? affinity : cpu_online_mask);
 
 	for_each_cpu_mask(cpu, temp_cpumask) {
 		avg = &cpu_rq(cpu)->avg;
@@ -4802,12 +4801,12 @@ select_task_rq_fair(struct task_struct *p, int sd_flag, int wake_flags)
 
 #ifdef CONFIG_SCHED_HMP
 	/* always put non-kernel forking tasks on a big domain */
-	if (unlikely(sd_flag & SD_BALANCE_FORK) && hmp_task_should_forkboost(p)) {
+	if (p->mm && (sd_flag & SD_BALANCE_FORK)) {
 		new_cpu = hmp_select_faster_cpu(p, prev_cpu);
 		if (new_cpu != NR_CPUS) {
 			hmp_next_up_delay(&p->se, new_cpu);
 			return new_cpu;
- 		}
+		}
 		/* failed to perform HMP fork balance, use normal balance */
 		new_cpu = cpu;
 	}
