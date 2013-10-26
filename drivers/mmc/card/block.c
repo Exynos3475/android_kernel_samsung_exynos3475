@@ -2241,8 +2241,10 @@ static int mmc_blk_issue_rq(struct mmc_queue *mq, struct request *req)
 			ret = mmc_blk_issue_secdiscard_rq(mq, req);
 		else
 			ret = mmc_blk_issue_discard_rq(mq, req);
+
 		if (card->ext_csd.cmdq_mode_en)
 			mmc_release_host(card->host);
+
 	} else if (cmd_flags & REQ_FLUSH) {
 		/* complete ongoing async transfer before issuing flush */
 		if (card->host->areq || card->ext_csd.cmdq_mode_en)
