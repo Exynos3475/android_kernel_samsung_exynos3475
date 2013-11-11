@@ -609,9 +609,11 @@ retry:
 
 	r->entropy_total += nbits;
 	if (!r->initialized && nbits > 0) {
+		r->entropy_total += nbits;
 		if (r->entropy_total > 128) {
 			r->initialized = 1;
-			r->entropy_total = 0;
+			if (r == &nonblocking_pool)
+				prandom_reseed_late();
 		}
 	}
 
