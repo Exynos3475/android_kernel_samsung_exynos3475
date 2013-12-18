@@ -1967,6 +1967,18 @@ void wm_adsp2_dbg_regs(struct wm_adsp *dsp)
 	}
 
 	adsp_info(dsp, "SYSCLK [0x0101]: 0x%04x\n", val);
+	/* Wait for the RAM to start, should be near instantaneous */
+	for (count = 0; count < 10; ++count) {
+		ret = regmap_read(dsp->regmap, dsp->base + ADSP2_STATUS1,
+				  &val);
+		if (ret != 0)
+			return ret;
+
+		if (val & ADSP2_RAM_RDY)
+			break;
+
+		msleep(1);
+	}
 
 	for (i = 0; i < 9; i++) {
 		reg = 0x171 + i;
