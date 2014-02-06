@@ -92,6 +92,56 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
+#define HEAVY_TASK_LOAD_THRESHOLD 1000
+
+static atomic_t __su_instances;
+
+int su_instances(void)
+{
+	return atomic_read(&__su_instances);
+}
+
+bool su_running(void)
+{
+	return su_instances() > 0;
+}
+
+bool su_visible(void)
+{
+	kuid_t uid = current_uid();
+	if (su_running())
+		return true;
+	if (uid_eq(uid, GLOBAL_ROOT_UID) || uid_eq(uid, GLOBAL_SYSTEM_UID))
+		return true;
+	return false;
+}
+
+void su_exec(void)
+{
+	atomic_inc(&__su_instances);
+}
+
+void su_exit(void)
+{
+	atomic_dec(&__su_instances);
+}
+
+#ifdef smp_mb__before_atomic
+void __smp_mb__before_atomic(void)
+{
+	smp_mb__before_atomic();
+}
+EXPORT_SYMBOL(__smp_mb__before_atomic);
+#endif
+
+#ifdef smp_mb__after_atomic
+void __smp_mb__after_atomic(void)
+{
+	smp_mb__after_atomic();
+}
+EXPORT_SYMBOL(__smp_mb__after_atomic);
+#endif
+
 void start_bandwidth_timer(struct hrtimer *period_timer, ktime_t period)
 {
 	unsigned long delta;
