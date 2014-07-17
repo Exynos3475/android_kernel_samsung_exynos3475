@@ -321,6 +321,7 @@
 312	common	kcmp			sys_kcmp
 313	common	finit_module		sys_finit_module
 314	common	seccomp			sys_seccomp
+318	common	getrandom		sys_getrandom
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact
