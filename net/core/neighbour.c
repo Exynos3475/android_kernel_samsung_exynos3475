@@ -955,7 +955,7 @@ static void neigh_timer_handler(unsigned long arg)
 	if (neigh_probe_enable) {
 		if (neigh->nud_state & (NUD_INCOMPLETE | NUD_PROBE | NUD_STALE))
 			neigh_probe(neigh);
-	} else if (neigh->nud_state & (NUD_INCOMPLETE | NUD_PROBE)) {
+	} else if (neigh->nud_state & (NUD_INCOMPLETE | NUD_PROBE | NUD_STALE)) {
 		neigh_probe(neigh);
 	} else {
 out:
