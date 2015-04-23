@@ -43,6 +43,7 @@
 #include <linux/workqueue.h>
 #include <linux/sysfs.h>
 #include <net/net_namespace.h>
+#include <net/sock.h>
 
 struct idletimer_tg_attr {
 	struct attribute attr;
@@ -61,6 +62,7 @@ struct idletimer_tg {
 	unsigned int refcnt;
 	bool send_nl_msg;
 	bool active;
+	uid_t uid;
 };
 
 static LIST_HEAD(idletimer_tg_list);
@@ -73,6 +75,9 @@ static void notify_netlink_uevent(const char *label, struct idletimer_tg *timer)
 	char label_msg[NLMSG_MAX_SIZE];
 	char state_msg[NLMSG_MAX_SIZE];
 	char *envp[] = { label_msg, state_msg, NULL };
+	char timestamp_msg[NLMSG_MAX_SIZE];
+	char uid_msg[NLMSG_MAX_SIZE];
+	char *envp[] = { iface_msg, state_msg, timestamp_msg, uid_msg, NULL };
 	int res;
 
 	res = snprintf(label_msg, NLMSG_MAX_SIZE, "LABEL=%s",
@@ -87,7 +92,26 @@ static void notify_netlink_uevent(const char *label, struct idletimer_tg *timer)
 		pr_err("message too long (%d)", res);
 		return;
 	}
-	pr_debug("putting nlmsg: <%s> <%s>\n", label_msg, state_msg);
+
+	if (state) {
+		res = snprintf(uid_msg, NLMSG_MAX_SIZE, "UID=%u", timer->uid);
+		if (NLMSG_MAX_SIZE <= res)
+			pr_err("message too long (%d)", res);
+	} else {
+		res = snprintf(uid_msg, NLMSG_MAX_SIZE, "UID=");
+		if (NLMSG_MAX_SIZE <= res)
+			pr_err("message too long (%d)", res);
+	}
+
+	time_ns = timespec_to_ns(&ts);
+	res = snprintf(timestamp_msg, NLMSG_MAX_SIZE, "TIME_NS=%llu", time_ns);
+	if (NLMSG_MAX_SIZE <= res) {
+		timestamp_msg[0] = '\0';
+		pr_err("message too long (%d)", res);
+	}
+
+	pr_debug("putting nlmsg: <%s> <%s> <%s> <%s>\n", iface_msg, state_msg,
+		 timestamp_msg, uid_msg);
 	kobject_uevent_env(idletimer_tg_kobj, KOBJ_CHANGE, envp);
 	return;
 
@@ -187,6 +211,19 @@ static int idletimer_tg_create(struct idletimer_tg_info *info)
 	info->timer->refcnt = 1;
 	info->timer->send_nl_msg = (info->send_nl_msg == 0) ? false : true;
 	info->timer->active = true;
+	info->timer->timeout = info->timeout;
+
+	info->timer->delayed_timer_trigger.tv_sec = 0;
+	info->timer->delayed_timer_trigger.tv_nsec = 0;
+	info->timer->work_pending = false;
+	info->timer->uid = 0;
+	get_monotonic_boottime(&info->timer->last_modified_timer);
+
+	info->timer->pm_nb.notifier_call = idletimer_resume;
+	ret = register_pm_notifier(&info->timer->pm_nb);
+	if (ret)
+		printk(KERN_WARNING "[%s] Failed to register pm notifier %d\n",
+				__func__, ret);
 
 	mod_timer(&info->timer->timer,
 		  msecs_to_jiffies(info->timeout * 1000) + jiffies);
@@ -201,6 +238,46 @@ out_free_timer:
 	kfree(info->timer);
 out:
 	return ret;
+}
+
+static void reset_timer(const struct idletimer_tg_info *info,
+			struct sk_buff *skb)
+{
+	unsigned long now = jiffies;
+	struct idletimer_tg *timer = info->timer;
+	bool timer_prev;
+
+	spin_lock_bh(&timestamp_lock);
+	timer_prev = timer->active;
+	timer->active = true;
+	/* timer_prev is used to guard overflow problem in time_before*/
+	if (!timer_prev || time_before(timer->timer.expires, now)) {
+		pr_debug("Starting Checkentry timer (Expired, Jiffies): %lu, %lu\n",
+				timer->timer.expires, now);
+
+		/* Stores the uid resposible for waking up the radio */
+		if (skb && (skb->sk)) {
+			struct sock *sk = skb->sk;
+			read_lock_bh(&sk->sk_callback_lock);
+			if ((sk->sk_socket) && (sk->sk_socket->file) &&
+		    (sk->sk_socket->file->f_cred))
+				timer->uid = sk->sk_socket->file->f_cred->uid;
+			read_unlock_bh(&sk->sk_callback_lock);
+		}
+
+		/* checks if there is a pending inactive notification*/
+		if (timer->work_pending)
+			timer->delayed_timer_trigger = timer->last_modified_timer;
+		else {
+			timer->work_pending = true;
+			schedule_work(&timer->work);
+		}
+	}
+
+	get_monotonic_boottime(&timer->last_modified_timer);
+	mod_timer(&timer->timer,
+			msecs_to_jiffies(info->timeout * 1000) + now);
+	spin_unlock_bh(&timestamp_lock);
 }
 
 /*
@@ -226,9 +303,7 @@ static unsigned int idletimer_tg_target(struct sk_buff *skb,
 	}
 
 	/* TODO: Avoid modifying timers on each packet */
-	mod_timer(&info->timer->timer,
-		  msecs_to_jiffies(info->timeout * 1000) + now);
-
+	reset_timer(info, skb);
 	return XT_CONTINUE;
 }
 
@@ -257,17 +332,7 @@ static int idletimer_tg_checkentry(const struct xt_tgchk_param *par)
 	info->timer = __idletimer_tg_find_by_label(info->label);
 	if (info->timer) {
 		info->timer->refcnt++;
-		info->timer->active = true;
-
-		if (time_before(info->timer->timer.expires, now)) {
-			schedule_work(&info->timer->work);
-			pr_debug("Starting Checkentry timer (Expired, Jiffies): %lu, %lu\n",
-				info->timer->timer.expires, now);
-		}
-
-		mod_timer(&info->timer->timer,
-			  msecs_to_jiffies(info->timeout * 1000) + now);
-
+		reset_timer(info, NULL);
 		pr_debug("increased refcnt of timer %s to %u\n",
 			 info->label, info->timer->refcnt);
 	} else {
