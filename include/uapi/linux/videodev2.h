@@ -975,20 +975,20 @@ struct v4l2_standard {
  *	V I D E O	T I M I N G S	D V	P R E S E T
  */
 struct v4l2_dv_preset {
-	__u32	preset;
-	__u32	reserved[4];
+    __u32	preset;
+    __u32	reserved[4];
 };
 
 /*
  *	D V	P R E S E T S	E N U M E R A T I O N
  */
 struct v4l2_dv_enum_preset {
-	__u32	index;
-	__u32	preset;
-	__u8	name[32]; /* Name of the preset timing */
-	__u32	width;
-	__u32	height;
-	__u32	reserved[4];
+    __u32	index;
+    __u32	preset;
+    __u8	name[32]; /* Name of the preset timing */
+    __u32	width;
+    __u32	height;
+    __u32	reserved[4];
 };
 
 /*
