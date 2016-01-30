@@ -510,7 +510,8 @@ int snd_timer_start(struct snd_timer_instance *timeri, unsigned int ticks)
 		return -EINVAL;
 	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE) {
 		result = snd_timer_start_slave(timeri);
-		snd_timer_notify1(timeri, SNDRV_TIMER_EVENT_START);
+		if (result >= 0)
+			snd_timer_notify1(timeri, SNDRV_TIMER_EVENT_START);
 		return result;
 	}
 	timer = timeri->timer;
@@ -519,11 +520,18 @@ int snd_timer_start(struct snd_timer_instance *timeri, unsigned int ticks)
 	if (timer->card && timer->card->shutdown)
 		return -ENODEV;
 	spin_lock_irqsave(&timer->lock, flags);
+	if (timeri->flags & (SNDRV_TIMER_IFLG_RUNNING |
+			     SNDRV_TIMER_IFLG_START)) {
+		result = -EBUSY;
+		goto unlock;
+	}
 	timeri->ticks = timeri->cticks = ticks;
 	timeri->pticks = 0;
 	result = snd_timer_start1(timer, timeri, ticks);
+ unlock:
 	spin_unlock_irqrestore(&timer->lock, flags);
-	snd_timer_notify1(timeri, SNDRV_TIMER_EVENT_START);
+	if (result >= 0)
+		snd_timer_notify1(timeri, SNDRV_TIMER_EVENT_START);
 	return result;
 }
 
@@ -539,6 +547,10 @@ static int _snd_timer_stop(struct snd_timer_instance *timeri, int event)
 
 	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE) {
 		spin_lock_irqsave(&slave_active_lock, flags);
+		if (!(timeri->flags & SNDRV_TIMER_IFLG_RUNNING)) {
+			spin_unlock_irqrestore(&slave_active_lock, flags);
+			return -EBUSY;
+		}
 		timeri->flags &= ~SNDRV_TIMER_IFLG_RUNNING;
 		list_del_init(&timeri->ack_list);
 		list_del_init(&timeri->active_list);
@@ -551,8 +563,8 @@ static int _snd_timer_stop(struct snd_timer_instance *timeri, int event)
 	spin_lock_irqsave(&timer->lock, flags);
 	if (!(timeri->flags & (SNDRV_TIMER_IFLG_RUNNING |
 			       SNDRV_TIMER_IFLG_START))) {
-		result = -EBUSY;
-		goto unlock;
+		spin_unlock_irqrestore(&timer->lock, flags);
+		return -EBUSY;
 	}
 	list_del_init(&timeri->ack_list);
 	list_del_init(&timeri->active_list);
@@ -650,10 +662,15 @@ int snd_timer_continue(struct snd_timer_instance *timeri)
 	if (timer->card && timer->card->shutdown)
 		return -ENODEV;
 	spin_lock_irqsave(&timer->lock, flags);
+	if (timeri->flags & SNDRV_TIMER_IFLG_RUNNING) {
+		result = -EBUSY;
+		goto unlock;
+	}
 	if (!timeri->cticks)
 		timeri->cticks = 1;
 	timeri->pticks = 0;
 	result = snd_timer_start1(timer, timeri, timer->sticks);
+ unlock:
 	spin_unlock_irqrestore(&timer->lock, flags);
 	snd_timer_notify1(timeri, SNDRV_TIMER_EVENT_CONTINUE);
 	return result;
