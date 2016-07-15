@@ -24,6 +24,7 @@
 #include <linux/nmi.h>
 #include <linux/exynos-ss.h>
 #include "sched/sched.h"
+#include <linux/console.h>
 
 #ifdef CONFIG_EXYNOS_CORESIGHT_PC_INFO
 #include <mach/coresight.h>
