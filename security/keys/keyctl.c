@@ -730,6 +730,11 @@ long keyctl_read_key(key_serial_t keyid, char __user *buffer, size_t buflen)
 		goto error2;
 	}
 
+	if (test_bit(KEY_FLAG_NEGATIVE, &key->flags)) {
+		ret = -ENOKEY;
+		goto error2;
+	}
+
 	/* see if we can read it directly */
 	ret = key_permission(key_ref, KEY_READ);
 	if (ret == 0)
