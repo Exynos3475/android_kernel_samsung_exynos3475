@@ -64,8 +64,6 @@
 /* yuv411 of JFIF JPEG */
 #define V4L2_PIX_FMT_JPEG_411 v4l2_fourcc('J', 'P', 'G', '1')
 
-#include <linux/exynos_mfc_media.h>
-
 /* added for lihwjpeg.so */
 
 /* yuv444 of JFIF JPEG */
