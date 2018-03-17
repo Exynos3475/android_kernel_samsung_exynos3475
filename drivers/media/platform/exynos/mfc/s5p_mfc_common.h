@@ -23,7 +23,7 @@
 #include <media/v4l2-device.h>
 #include <media/v4l2-ioctl.h>
 #include <media/v4l2-fh.h>
-#include <linux/exynos_mfc_media.h>
+//#include <linux/exynos_mfc_media.h>
 
 #include <media/videobuf2-core.h>
 
