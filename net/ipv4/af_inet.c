@@ -442,6 +442,8 @@ out_rcu_unlock:
 	goto out;
 }
 
+#ifdef CONFIG_KNOX_NCM /* START_OF_KNOX_NPA */
+
 /** The function is used to check if the ncm feature is enabled or not; if enabled then collect the socket meta-data information; **/
 static void knox_collect_metadata(struct socket *sock) {
     if(check_ncm_flag()) {
@@ -501,6 +503,8 @@ static void knox_collect_metadata(struct socket *sock) {
     }
 }
 
+#endif
+
 /*
  *	The peer socket should always be NULL (or else). When we call this
  *	function we are destroying the object and from then on nobody
@@ -529,7 +533,7 @@ int inet_release(struct socket *sock)
 		if (sock_flag(sk, SOCK_LINGER) &&
 		    !(current->flags & PF_EXITING))
 			timeout = sk->sk_lingertime;
-		knox_collect_metadata(sock);
+		//knox_collect_metadata(sock);
 		sock->sk = NULL;
 		sk->sk_prot->close(sk, timeout);
 	}
