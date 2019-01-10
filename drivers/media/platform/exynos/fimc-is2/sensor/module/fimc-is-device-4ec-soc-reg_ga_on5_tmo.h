@@ -9682,4 +9682,11 @@ static const u32 s5k4ecga_check_configuration_change[] = {
 	0x002E0268,
 };
 
+static const u32 s5k4ecga_stop_stream[] = {
+	0x00287000,
+	0x002A023E,
+	0x0F120000,
+	0x0F120001,
+};
+
 #endif
