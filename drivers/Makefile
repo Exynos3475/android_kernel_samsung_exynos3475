@@ -166,6 +166,5 @@ obj-$(CONFIG_MOBICORE_DRIVER)   += gud/
 # Sensor
 obj-$(CONFIG_SENSORS)		+= sensors/
 
-#Motor
+# Motor
 obj-$(CONFIG_ANDROID_TIMED_OUTPUT)		+= motor/
-

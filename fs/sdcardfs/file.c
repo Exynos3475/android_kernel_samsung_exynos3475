@@ -74,12 +74,10 @@ static ssize_t sdcardfs_write(struct file *file, const char __user *buf,
 	err = vfs_write(lower_file, buf, count, ppos);
 	/* update our inode times+sizes upon a successful lower write */
 	if (err >= 0) {
-		if (sizeof(loff_t) > sizeof(long))
-			inode_lock(inode);
-		fsstack_copy_inode_size(inode, file_inode(lower_file));
-		fsstack_copy_attr_times(inode, file_inode(lower_file));
-		if (sizeof(loff_t) > sizeof(long))
-			inode_unlock(inode);
+		fsstack_copy_inode_size(dentry->d_inode,
+					lower_file->f_path.dentry->d_inode);
+		fsstack_copy_attr_times(dentry->d_inode,
+					lower_file->f_path.dentry->d_inode);
 	}
 
 	return err;
