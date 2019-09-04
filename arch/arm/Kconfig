@@ -1534,7 +1534,7 @@ config HMP_FREQUENCY_INVARIANT_SCALE
 config SCHED_HMP_LITTLE_PACKING
 	bool "Small task packing for HMP"
 	depends on SCHED_HMP
-	default n
+	default y
 	help
 	  Allows the HMP Scheduler to pack small tasks into CPUs in the
 	  smallest HMP domain.
