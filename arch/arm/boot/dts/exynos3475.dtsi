@@ -33,6 +33,13 @@
 			     <0 53 4>;
 	};
 
+       firmware {
+               android {
+                       compatible = "android,firmware";
+                       hardware = "universal3475";
+               };
+       };
+
 	aliases {
 		mdev0 = &mdev_0;
 		dsim0 = &dsim_0;
