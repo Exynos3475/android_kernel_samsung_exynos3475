@@ -748,6 +748,8 @@ static int sec_chg_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
 		val->intval = s2mu005_get_fast_charging_current(charger->client);
+		// AOSP expects microamperes
+		val->intval *= 1000;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		if (charger->charging_current) {
