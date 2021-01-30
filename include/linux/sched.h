@@ -52,7 +52,7 @@ struct sched_param {
 #include <linux/llist.h>
 #include <linux/uidgid.h>
 #include <linux/gfp.h>
-
+#include <linux/sched/prio.h>
 #include <asm/processor.h>
 
 struct exec_domain;

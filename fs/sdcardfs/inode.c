@@ -480,7 +480,6 @@ static int sdcardfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct vfsmount *lower_mnt = NULL;
 	struct dentry *trap = NULL;
 	struct path lower_old_path, lower_new_path;
-	struct sdcardfs_inode_info *new_dir_info = SDCARDFS_I(new_dir);
 	const struct cred *saved_cred = NULL;
 
 	if (!check_caller_access_to_name(old_dir, &old_dentry->d_name) ||
@@ -530,21 +529,6 @@ static int sdcardfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	fixup_tmp_permissions(old_dentry->d_inode);
 	fixup_lower_ownership(old_dentry, new_dentry->d_name.name);
 	d_invalidate(old_dentry); /* Can't fixup ownership recursively :( */
-
-	if (!uid_eq(old_dir->i_uid, new_dir->i_uid) ||
-		 new_dir_info->perm == PERM_ANDROID_DATA ||
-		 new_dir_info->perm == PERM_ANDROID_OBB ||
-		 new_dir_info->perm == PERM_ANDROID_MEDIA) {
-		spin_lock(&old_dentry->d_lock);
-		old_dentry->d_flags |= DCACHE_WILL_INVALIDATE;
-		spin_unlock(&old_dentry->d_lock);
-	}
-
-out_err:
-	mnt_drop_write(lower_new_path.mnt);
-out_drop_old_write:
-	mnt_drop_write(lower_old_path.mnt);
-
 out:
 	unlock_rename(lower_old_dir_dentry, lower_new_dir_dentry);
 	dput(lower_old_dir_dentry);
