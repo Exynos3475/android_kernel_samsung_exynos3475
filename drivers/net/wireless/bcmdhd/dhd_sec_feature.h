@@ -260,3 +260,6 @@
 #define DISABLE_FLOW_CONTROL
 #endif /* CONFIG_MACH_KONA */
 #endif /* _dhd_sec_feature_h_ */
+
+#define READ_MACADDR
+
