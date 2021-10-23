@@ -43,7 +43,7 @@
 #include "fimc-is-device-sr200-soc-reg-xcover3velte.h"
 #elif defined(CONFIG_CAMERA_ON5LTE) /* F2.2 On5LTE TMO */
 #include "fimc-is-device-sr200-soc-reg_on5_tmo.h"
-#else /* F2.2, J1xLTE */
+#else /* F2.2, J1xLTE & J2LTE */
 #include "fimc-is-device-sr200-soc-reg.h"
 #endif
 
@@ -113,10 +113,8 @@ static const struct sensor_regset_table sr200_regset_table = {
 	.flip_off		= SENSOR_REGISTER_REGSET(sr200_flip_off),
 	.camcorder_flip		= SENSOR_REGISTER_REGSET(sr200_camcorder_flip),
 
-	.preview_anti_banding_flicker_50hz	= SENSOR_REGISTER_REGSET(sr200_Preview_anti_banding_flicker_50hz),
-	.preview_anti_banding_flicker_60hz	= SENSOR_REGISTER_REGSET(sr200_Preview_anti_banding_flicker_60hz),
-	.camcorder_anti_banding_flicker_50hz	= SENSOR_REGISTER_REGSET(sr200_Camcorder_anti_banding_flicker_50hz),
-	.camcorder_anti_banding_flicker_60hz	= SENSOR_REGISTER_REGSET(sr200_Camcorder_anti_banding_flicker_60hz),
+	.anti_banding_flicker_50hz	= SENSOR_REGISTER_REGSET(sr200_anti_banding_flicker_50hz),
+	.anti_banding_flicker_60hz	= SENSOR_REGISTER_REGSET(sr200_anti_banding_flicker_60hz),
 
 	.video_mode_preview	= SENSOR_REGISTER_REGSET(sr200_video_mode_preview),
 	.video_mode_encode	= SENSOR_REGISTER_REGSET(sr200_video_mode_encode),
@@ -243,7 +241,6 @@ static int fimc_is_sr200_write8(struct i2c_client *client, u8 addr, u8 val)
 	int ret = 0;
 	struct i2c_msg msg[1];
 	u8 wbuf[3];
-	int retry_count = MAX_I2C_RETRY_COUNT;
 
 	if (!client->adapter) {
 		cam_err("Could not find adapter!\n");
@@ -262,15 +259,7 @@ static int fimc_is_sr200_write8(struct i2c_client *client, u8 addr, u8 val)
 		cam_info("%s : use delay (%d ms) in I2C Write \n", __func__, val * 10);
 		msleep(val * 10);
 	} else {
-		do {
-			ret = i2c_transfer(client->adapter, msg, 1);
-			if (likely(ret == 1))
-				break;
-			cam_info("%s : I2C communication failed so retry communication: retry count : %d \n",
-				__func__, retry_count);
-			msleep(10);
-		} while (retry_count-- > 0);
-
+		ret = i2c_transfer(client->adapter, msg, 1);
 		if (ret < 0) {
 			cam_err("i2c transfer fail(%d)", ret);
 			cam_info("I2CW08(0x%04X) [0x%04X] : 0x%04X\n", client->addr, addr, val);
@@ -662,7 +651,7 @@ static int sr200_set_frame_rate(struct v4l2_subdev *subdev, s32 fps)
 		return 0;
 	}
 
-	if ((fps == state->fps) && (state->vt_mode == VT_MODE_OFF)) {
+	if (fps == state->fps) {
 		cam_info("set_fps: fps:%d, state->fps:%d\n", fps, state->fps);
 		return 0;
 	}
@@ -736,26 +725,18 @@ static int sr200_set_anti_banding(struct v4l2_subdev *subdev, int anti_banding)
 	struct sr200_state *state = to_state(subdev);
 	int ret = 0;
 
-	cam_info("%s( %d ) : sensor_mode(%d) E\n",__func__, anti_banding, state->sensor_mode);
+	cam_info("%s( %d ) : E\n",__func__, anti_banding);
 
 	switch (anti_banding) {
 	case ANTI_BANDING_AUTO :
 	case ANTI_BANDING_OFF :
 	case ANTI_BANDING_50HZ :
-		if (state->sensor_mode == SENSOR_CAMERA)
-			ret = sensor_sr200_apply_set(subdev, "sr200_Preview_anti_banding_flicker_50hz",
-				&sr200_regset_table.preview_anti_banding_flicker_50hz);
-		else //SENSOR_movie
-			ret = sensor_sr200_apply_set(subdev, "sr200_Camcorder_anti_banding_flicker_50hz",
-				&sr200_regset_table.camcorder_anti_banding_flicker_50hz);
+		ret = sensor_sr200_apply_set(subdev, "sr200_anti_banding_flicker_50hz",
+			&sr200_regset_table.anti_banding_flicker_50hz);
 		break;
 	case ANTI_BANDING_60HZ :
-		if (state->sensor_mode == SENSOR_CAMERA)
-			ret = sensor_sr200_apply_set(subdev, "sr200_Preview_anti_banding_flicker_60hz",
-				&sr200_regset_table.preview_anti_banding_flicker_60hz);
-		else //SENSOR_movie
-			ret = sensor_sr200_apply_set(subdev, "sr200_Camcorder_anti_banding_flicker_60hz",
-				&sr200_regset_table.camcorder_anti_banding_flicker_60hz);
+		ret = sensor_sr200_apply_set(subdev, "sr200_anti_banding_flicker_60hz",
+			&sr200_regset_table.anti_banding_flicker_60hz);
 		break;
 	default:
 		cam_dbg("%s: Not support.(%d)\n", __func__, anti_banding);
@@ -1356,20 +1337,9 @@ static int sr200_start_preview(struct v4l2_subdev *subdev)
 
 	/* Set preview size */
 	err = sr200_set_preview_size(subdev);
-
-	/* VT_MODE fps update */
-	if (state->vt_mode != VT_MODE_OFF) {
-		cam_info("update fps to %d for vt_mode %d\n", state->fps, state->vt_mode);
-		err = sr200_set_frame_rate(subdev, state->fps);
-		CHECK_ERR(err);
-	}
-
 	CHECK_ERR_MSG(err, "failed to set preview size(%d)\n", err);
 
 	err = sr200_set_effect(subdev, state->effect);
-	CHECK_ERR(err);
-
-	err = sr200_set_anti_banding(subdev, state->anti_banding);
 	CHECK_ERR(err);
 
 	err = sensor_sr200_stream_on(subdev);
@@ -1444,7 +1414,7 @@ static int sensor_sr200_s_ctrl(struct v4l2_subdev *subdev, struct v4l2_control *
 		break;
 	case V4L2_CID_CAMERA_ANTI_BANDING:
 		cam_info("V4L2_CID_CAMERA_ANTI_BANDING :%d\n", ctrl->value);
-		state->anti_banding = ctrl->value;
+		ret = sr200_set_anti_banding(subdev, ctrl->value);
 		break;
 	case V4L2_CID_IS_CAMERA_METERING:
 	case V4L2_CID_CAMERA_METERING:
