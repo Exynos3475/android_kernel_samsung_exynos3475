@@ -1074,6 +1074,10 @@ static struct sensor_reg sr200_Init_Reg[] =
 	{0x50, 0x00},
 	/* PAGE 48 END */
 
+	/* PAGE 20 */
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
+
 	/* PAGE 22 */
 	{0x03, 0x22},
 	{0x10, 0xe9},
@@ -2164,6 +2168,10 @@ static struct sensor_reg sr200_Init_VT_Reg[] = {
 	{0x50, 0x00},
 	/* PAGE 48 END */
 
+	/* PAGE 20 */
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
+
 	/* PAGE 22 */
 	{0x03, 0x22},
 	{0x10, 0xe9},
@@ -2308,6 +2316,9 @@ static struct sensor_reg sr200_resol_176_144[] = {
 	{0x50, 0x00},
 	/* PAGE 48 END */
 
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
+
 	{0x03, 0x22},
 	{0x10, 0xe9}, /* AWB ON */
 
@@ -2449,6 +2460,9 @@ static struct sensor_reg sr200_resol_320_240[] = {
 
 	{0x50, 0x00},
 	/* PAGE 48 END */
+
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
 
 	{0x03, 0x22},
 	{0x10, 0xe9}, /* AWB ON */
@@ -2592,6 +2606,9 @@ static struct sensor_reg sr200_resol_352_288[] = {
 	{0x50, 0x00},
 	/* PAGE 48 END */
 
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
+
 	{0x03, 0x22},
 	{0x10, 0xe9}, /* AWB ON */
 
@@ -2714,6 +2731,9 @@ static struct sensor_reg sr200_resol_640_480[] = {
 	{0x50, 0x00},
 	/* PAGE 48 END */
 
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
+
 	{0x03, 0x22},
 	{0x10, 0xe9}, /* AWB ON */
 
@@ -2835,6 +2855,9 @@ static struct sensor_reg sr200_resol_800_600[] = {
 
 	{0x50, 0x00},
 	/* PAGE 48 END */
+
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
 
 	{0x03, 0x22},
 	{0x10, 0xe9}, /* AWB ON */
@@ -2964,6 +2987,9 @@ static struct sensor_reg sr200_resol_704_576[] = {
 	{0x39, 0x02}, /* drivability 24MHZ:02, 48MHz:03 */
 	{0x50, 0x00},
 	/* PAGE 48 END */
+
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
 
 	{0x03, 0x22},
 	{0x10, 0xe9}, /* AWB ON */
@@ -4382,6 +4408,10 @@ static struct sensor_reg  sr200_fps_auto[] = {
 	{0x50, 0x00},
 	/* PAGE 48 END */
 
+	/* PAGE 20 */
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
+
 	/* PAGE 22 */
 	{0x03, 0x22},
 	{0x10, 0xe9},
@@ -4502,6 +4532,9 @@ static struct sensor_reg  sr200_fps_auto[] = {
 
 	{0x50, 0x00},
 	/* PAGE 48 END */
+
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
 
 	{0x03, 0x22},
 	{0x10, 0xe9}, /* AWB ON */
@@ -5590,6 +5623,10 @@ static struct sensor_reg  sr200_fps_15_camcorder[] = {
 	{0x39, 0x03}, /* drivability 24MHZ:02, 48MHz:03 */
 	{0x50, 0x00},
 	/* PAGE 48 END */
+
+	/* PAGE 20 */
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
 
 	/* PAGE 22 */
 	{0x03, 0x22},
@@ -6681,6 +6718,10 @@ static struct sensor_reg  sr200_fps_7_camcorder[] = {
 	{0x39, 0x03}, /* drivability 24MHZ:02, 48MHz:03 */
 	{0x50, 0x00},
 	/* PAGE 48 END */
+
+	/* PAGE 20 */
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
 
 	/* PAGE 22 */
 	{0x03, 0x22},
@@ -7774,6 +7815,10 @@ static struct sensor_reg  sr200_fps_24_camcorder[] = {
 	{0x50, 0x00},
 	/* PAGE 48 END */
 
+	/* PAGE 20 */
+	{0x03, 0x20},
+	{0x10, 0x9c}, /* AE on 50hz */
+
 	/* PAGE 22 */
 	{0x03, 0x22},
 	{0x10, 0xe9},
@@ -7799,89 +7844,15 @@ static struct sensor_reg  sr200_fps_24_camcorder[] = {
 	/* END of sr200pc20m_recording_50Hz_common*/
 };
 
-static struct sensor_reg  sr200_Preview_anti_banding_flicker_50hz[] = {
-	{0x03, 0x00}, /* Sleep On */
-	{0x01, 0x31},
-
-	{0x03, 0x00}, /* page 0 */
-	{0x42, 0x00},
-	{0x43, 0x94}, /* 148 */
-
-	/* Page20 */
-	{0x03, 0x20}, 
-	{0x88, 0x05}, //EXP Max 8.33 fps 
-	{0x89, 0x7e}, 
-	{0x8a, 0x40}, 
-
+static struct sensor_reg  sr200_anti_banding_flicker_50hz[] = {
 	{0x03, 0x20},
 	{0x10, 0x9c},
-
-	{0x03, 0x00}, /* Sleep Off */
-	{0x01, 0x30},
-	{0xff, 0x28}, /* 400ms */
 	{0xff, 0xff},
 };
 
-static struct sensor_reg  sr200_Preview_anti_banding_flicker_60hz[] = {
-	{0x03, 0x00}, /* Sleep On */
-	{0x01, 0x31},
-	
-	{0x03, 0x00}, /* page 0 */
-	{0x42, 0x00}, //Vblank 126
-	{0x43, 0x7e}, /* 126 */
-
-	/* Page20 */
-	{0x03, 0x20},
-	{0x88, 0x05}, //EXP Max 8.00 fps 
-	{0x89, 0xb8}, 
-	{0x8a, 0xd8},
-
+static struct sensor_reg  sr200_anti_banding_flicker_60hz[] = {
 	{0x03, 0x20},
 	{0x10, 0x8c},
-
-	{0x03, 0x00}, /* Sleep Off */
-	{0x01, 0x30},
-	{0xff, 0x28}, /* 400ms */
-	{0xff, 0xff},
-};
-
-static struct sensor_reg  sr200_Camcorder_anti_banding_flicker_50hz[] = {
-
-	{0x03, 0x00}, /* Sleep On */
-	{0x01, 0x31},
-
-	/* Page20 */
-	{0x03, 0x20}, 
-	{0x88, 0x01}, //EXP Max 25.00 fps 
-	{0x89, 0xfa}, 
-	{0x8a, 0x40}, 
-
-	{0x03, 0x20},
-	{0x10, 0x9c}, /* AE on 50hz */
-
-	{0x03, 0x00}, /* Sleep Off */
-	{0x01, 0x30},
-	{0xff, 0x28}, /* 400ms */
-	{0xff, 0xff},
-};
-
-static struct sensor_reg  sr200_Camcorder_anti_banding_flicker_60hz[] = {
-
-	{0x03, 0x00}, /* Sleep On */
-	{0x01, 0x31},
-
-	/* Page20 */
-	{0x03, 0x20}, 
-	{0x88, 0x01}, //EXP Max 30.00 fps 
-	{0x89, 0xa4}, 
-	{0x8a, 0x00}, 
-
-	{0x03, 0x20},
-	{0x10, 0x8c}, /* AE on 60hz */
-
-	{0x03, 0x00}, /* Sleep Off */
-	{0x01, 0x30},
-	{0xff, 0x28}, /* 400ms */
 	{0xff, 0xff},
 };
 
