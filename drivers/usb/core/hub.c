@@ -40,6 +40,10 @@
 #endif
 #endif
 
+#if defined(CONFIG_USB_OTG_WHITELIST_FOR_MDM)
+#include "otg_whitelist_for_mdm.h"
+#endif
+
 #define USB_VENDOR_GENESYS_LOGIC		0x05e3
 #define HUB_QUIRK_CHECK_PORT_AUTOSUSPEND	0x01
 
@@ -727,18 +731,18 @@ static void hub_tt_work(struct work_struct *work)
 
 /**
  * usb_hub_set_port_power - control hub port's power state
- * @hdev: target hub
+ * @hdev: USB device belonging to the usb hub
+ * @hub: target hub
  * @port1: port index
  * @set: expected status
  *
  * call this function to control port's power via setting or
  * clearing the port's PORT_POWER feature.
  */
-int usb_hub_set_port_power(struct usb_device *hdev, int port1,
-		bool set)
+int usb_hub_set_port_power(struct usb_device *hdev, struct usb_hub *hub,
+			   int port1, bool set)
 {
 	int ret;
-	struct usb_hub *hub = usb_hub_to_struct_hub(hdev);
 	struct usb_port *port_dev = hub->ports[port1 - 1];
 
 	if (set)
@@ -939,7 +943,11 @@ static int hub_port_disable(struct usb_hub *hub, int port1, int set_state)
  */
 static void hub_port_logical_disconnect(struct usb_hub *hub, int port1)
 {
+#ifdef CONFIG_USB_DEBUG_DETAILED_LOG
+	dev_info(hub->intfdev, "logical disconnect on port %d\n", port1);
+#else
 	dev_dbg(hub->intfdev, "logical disconnect on port %d\n", port1);
+#endif
 	hub_port_disable(hub, port1, 1);
 
 	/* FIXME let caller ask to power down the port:
@@ -989,6 +997,7 @@ enum hub_activation_type {
 
 static void hub_init_func2(struct work_struct *ws);
 static void hub_init_func3(struct work_struct *ws);
+static void hub_release(struct kref *kref);
 
 static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 {
@@ -1001,11 +1010,20 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 	unsigned delay;
 
 	/* Continue a partial initialization */
-	if (type == HUB_INIT2)
-		goto init2;
-	if (type == HUB_INIT3)
-		goto init3;
+	if (type == HUB_INIT2 || type == HUB_INIT3) {
+		device_lock(hub->intfdev);
 
+		/* Was the hub disconnected while we were waiting? */
+		if (hub->disconnected) {
+			device_unlock(hub->intfdev);
+			kref_put(&hub->kref, hub_release);
+			return;
+		}
+		if (type == HUB_INIT2)
+			goto init2;
+		goto init3;
+	}
+	kref_get(&hub->kref);
 	/* The superspeed hub except for root hub has to use Hub Depth
 	 * value as an offset into the route string to locate the bits
 	 * it uses to determine the downstream port number. So hub driver
@@ -1195,6 +1213,7 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 			PREPARE_DELAYED_WORK(&hub->init_work, hub_init_func3);
 			schedule_delayed_work(&hub->init_work,
 					msecs_to_jiffies(delay));
+			device_unlock(hub->intfdev);
 			return;		/* Continues at init3: below */
 		} else {
 			msleep(delay);
@@ -1215,6 +1234,11 @@ static void hub_activate(struct usb_hub *hub, enum hub_activation_type type)
 	/* Allow autosuspend if it was suppressed */
 	if (type <= HUB_INIT3)
 		usb_autopm_put_interface_async(to_usb_interface(hub->intfdev));
+
+	if (type == HUB_INIT2 || type == HUB_INIT3)
+		device_unlock(hub->intfdev);
+
+	kref_put(&hub->kref, hub_release);
 }
 
 /* Implement the continuations for the delays above */
@@ -1588,7 +1612,7 @@ static void hub_disconnect(struct usb_interface *intf)
 {
 	struct usb_hub *hub = usb_get_intfdata(intf);
 	struct usb_device *hdev = interface_to_usbdev(intf);
-	int i;
+	int port1;
 
 	/* Take the hub off the event list and don't let it be added again */
 	spin_lock_irq(&hub_event_lock);
@@ -1603,11 +1627,15 @@ static void hub_disconnect(struct usb_interface *intf)
 	hub->error = 0;
 	hub_quiesce(hub, HUB_DISCONNECT);
 
-	usb_set_intfdata (intf, NULL);
+	/* Avoid races with recursively_mark_NOTATTACHED() */
+	spin_lock_irq(&device_state_lock);
+	port1 = hdev->maxchild;
+	hdev->maxchild = 0;
+	usb_set_intfdata(intf, NULL);
+	spin_unlock_irq(&device_state_lock);
 
-	for (i = 0; i < hdev->maxchild; i++)
-		usb_hub_remove_port_device(hub, i + 1);
-	hub->hdev->maxchild = 0;
+	for (; port1 > 0; --port1)
+		usb_hub_remove_port_device(hub, port1);
 
 	if (hub->hdev->speed == USB_SPEED_HIGH)
 		highspeed_hubs--;
@@ -1778,15 +1806,17 @@ hub_ioctl(struct usb_interface *intf, unsigned int code, void *user_data)
 static int find_port_owner(struct usb_device *hdev, unsigned port1,
 		struct dev_state ***ppowner)
 {
+	struct usb_hub *hub = usb_hub_to_struct_hub(hdev);
+
 	if (hdev->state == USB_STATE_NOTATTACHED)
 		return -ENODEV;
 	if (port1 == 0 || port1 > hdev->maxchild)
 		return -EINVAL;
 
-	/* This assumes that devices not managed by the hub driver
+	/* Devices not managed by the hub driver
 	 * will always have maxchild equal to 0.
 	 */
-	*ppowner = &(usb_hub_to_struct_hub(hdev)->ports[port1 - 1]->port_owner);
+	*ppowner = &(hub->ports[port1 - 1]->port_owner);
 	return 0;
 }
 
@@ -2226,6 +2256,19 @@ static int usb_enumerate_device(struct usb_device *udev)
 	if (err < 0)
 		return err;
 
+#if defined(CONFIG_USB_OTG_WHITELIST_FOR_MDM)
+	if (IS_ENABLED(CONFIG_USB_OTG_WHITELIST_FOR_MDM) &&
+		/*hcd->tpl_support &&*/
+		!is_targeted_for_samsung_mdm(udev)) {
+		if (IS_ENABLED(CONFIG_USB_OTG) && (udev->bus->b_hnp_enable
+			|| udev->bus->is_b_host)) {
+			err = usb_port_suspend(udev, PMSG_AUTO_SUSPEND);
+			if (err < 0)
+				dev_dbg(&udev->dev, "HNP fail, %d\n", err);
+		}
+		return -ENOTSUPP;
+	}
+#endif
 	usb_detect_interface_quirks(udev);
 
 	return 0;
@@ -4335,11 +4378,15 @@ static void hub_port_connect_change(struct usb_hub *hub, int port1,
 	struct usb_device *udev;
 	int status, i;
 	unsigned unit_load;
-
-	dev_dbg (hub_dev,
+#ifdef CONFIG_USB_DEBUG_DETAILED_LOG
+	dev_info(hub_dev,
 		"port %d, status %04x, change %04x, %s\n",
 		port1, portstatus, portchange, portspeed(hub, portstatus));
-
+#else
+	dev_dbg(hub_dev,
+		"port %d, status %04x, change %04x, %s\n",
+		port1, portstatus, portchange, portspeed(hub, portstatus));
+#endif
 	if (hub->has_indicators) {
 		set_port_led(hub, port1, HUB_LED_AUTO);
 		hub->indicator[port1-1] = INDICATOR_AUTO;
@@ -5356,7 +5403,8 @@ void usb_set_hub_port_connect_type(struct usb_device *hdev, int port1,
 {
 	struct usb_hub *hub = usb_hub_to_struct_hub(hdev);
 
-	hub->ports[port1 - 1]->connect_type = type;
+	if (hub)
+		hub->ports[port1 - 1]->connect_type = type;
 }
 
 /**
@@ -5371,6 +5419,9 @@ enum usb_port_connect_type
 usb_get_hub_port_connect_type(struct usb_device *hdev, int port1)
 {
 	struct usb_hub *hub = usb_hub_to_struct_hub(hdev);
+
+	if (!hub)
+		return USB_PORT_CONNECT_TYPE_UNKNOWN;
 
 	return hub->ports[port1 - 1]->connect_type;
 }
@@ -5429,6 +5480,9 @@ acpi_handle usb_get_hub_port_acpi_handle(struct usb_device *hdev,
 	int port1)
 {
 	struct usb_hub *hub = usb_hub_to_struct_hub(hdev);
+
+	if (!hub)
+		return NULL;
 
 	return DEVICE_ACPI_HANDLE(&hub->ports[port1 - 1]->dev);
 }

@@ -115,7 +115,8 @@ static inline int ntrig_get_mode(struct hid_device *hdev)
 	struct hid_report *report = hdev->report_enum[HID_FEATURE_REPORT].
 				    report_id_hash[0x0d];
 
-	if (!report)
+	if (!report || report->maxfield < 1 ||
+	    report->field[0]->report_count < 1)
 		return -EINVAL;
 
 	hid_hw_request(hdev, report, HID_REQ_GET_REPORT);
@@ -858,14 +859,15 @@ not_claimed_input:
 	return 1;
 }
 
-static void ntrig_input_configured(struct hid_device *hid,
+static int ntrig_input_configured(struct hid_device *hid,
 		struct hid_input *hidinput)
 
 {
 	struct input_dev *input = hidinput->input;
+	int ret = 0;
 
 	if (hidinput->report->maxfield < 1)
-		return;
+		return ret;
 
 	switch (hidinput->report->field[0]->application) {
 	case HID_DG_PEN:
@@ -889,6 +891,7 @@ static void ntrig_input_configured(struct hid_device *hid,
 							"N-Trig MultiTouch";
 		break;
 	}
+	return ret;
 }
 
 static int ntrig_probe(struct hid_device *hdev, const struct hid_device_id *id)

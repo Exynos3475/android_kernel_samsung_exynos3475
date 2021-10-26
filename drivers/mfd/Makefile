@@ -40,8 +40,8 @@ obj-$(CONFIG_MFD_ARIZONA_SPI)	+= arizona-spi.o
 ifneq ($(CONFIG_MFD_WM5102),n)
 obj-$(CONFIG_MFD_ARIZONA)	+= wm5102-tables.o
 endif
-ifneq ($(CONFIG_MFD_WM5110),n)
-obj-$(CONFIG_MFD_ARIZONA)	+= wm5110-tables.o
+ifneq ($(CONFIG_MFD_FLORIDA),n)
+obj-$(CONFIG_MFD_ARIZONA)	+= florida-tables.o
 endif
 obj-$(CONFIG_MFD_WM8400)	+= wm8400-core.o
 wm831x-objs			:= wm831x-core.o wm831x-irq.o wm831x-otp.o
@@ -155,3 +155,6 @@ obj-$(CONFIG_MFD_LM3533)	+= lm3533-core.o lm3533-ctrlbank.o
 obj-$(CONFIG_VEXPRESS_CONFIG)	+= vexpress-config.o vexpress-sysreg.o
 obj-$(CONFIG_MFD_RETU)		+= retu-mfd.o
 obj-$(CONFIG_MFD_AS3711)	+= as3711.o
+obj-$(CONFIG_MFD_SM5703)	+= sm5703_core.o sm5703_irq.o
+obj-$(CONFIG_MFD_S2MU003)	+= s2mu003_core.o s2mu003_irq.o
+obj-$(CONFIG_MFD_S2MU005)	+= s2mu005_core.o s2mu005_irq.o

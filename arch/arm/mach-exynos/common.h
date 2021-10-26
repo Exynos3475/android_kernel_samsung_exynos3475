@@ -13,7 +13,7 @@
 #define __ARCH_ARM_MACH_EXYNOS_COMMON_H
 
 #include <linux/of.h>
-
+#include <mach/pmu.h>
 void mct_init(void __iomem *base, int irq_g0, int irq_l0, int irq_l1);
 void exynos_init_time(void);
 extern unsigned long xxti_f, xusbxti_f;
@@ -72,32 +72,38 @@ void exynos4212_register_clocks(void);
 #define exynos4212_register_clocks()
 #endif
 
+#if defined(CONFIG_SOC_EXYNOS5430)
+int exynos5430_pmu_init(void);
+#else
+#define exynos5430_pmu_init()
+#endif
+
+#if defined(CONFIG_SOC_EXYNOS5433)
+int exynos5433_pmu_init(void);
+#else
+#define exynos5433_pmu_init()
+#endif
+
+#ifdef CONFIG_SOC_EXYNOS5422
+int exynos5422_pmu_init(void);
+#else
+#define exynos5422_pmu_init()
+#endif
+
+#ifdef CONFIG_SOC_EXYNOS3475
+int exynos3475_pmu_init(void);
+#else
+#define exynos3475_pmu_init()
+#endif
+
 struct device_node;
 void combiner_init(void __iomem *combiner_base, struct device_node *np,
 			unsigned int max_nr, int irq_base);
 
 extern struct smp_operations exynos_smp_ops;
-
 extern void exynos_cpu_die(unsigned int cpu);
 
-/* PMU(Power Management Unit) support */
+extern void cci_snoop_disable(unsigned int sif);
 
-#define PMU_TABLE_END	NULL
-
-enum sys_powerdown {
-	SYS_AFTR,
-	SYS_LPA,
-	SYS_SLEEP,
-	NUM_SYS_POWERDOWN,
-};
-
-extern unsigned long l2x0_regs_phys;
-struct exynos_pmu_conf {
-	void __iomem *reg;
-	unsigned int val[NUM_SYS_POWERDOWN];
-};
-
-extern void exynos_sys_powerdown_conf(enum sys_powerdown mode);
-extern void s3c_cpu_resume(void);
-
+extern struct exynos_cpu_power_ops exynos_cpu;
 #endif /* __ARCH_ARM_MACH_EXYNOS_COMMON_H */

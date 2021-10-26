@@ -318,6 +318,29 @@ config REGULATOR_S2MPS11
 	 via I2C bus. S2MPS11 is comprised of high efficient Buck converters
 	 including Dual-Phase Buck converter, Buck-Boost converter, various LDOs.
 
+config REGULATOR_S2MPS13
+	tristate "Samsung S2MPS13 voltage regulator"
+	depends on MFD_SEC_CORE
+	help
+	 This driver supports a Samsung S2MPS13 voltage output regulator
+	 via I2C bus. S2MPS13 is comprised of high efficient Buck converters
+	 including Dual-Phase Buck converter, Buck-Boost converter, various LDOs.
+
+config REGULATOR_S2MPU04
+	tristate "Samsung S2MPU04 voltage regulator"
+	depends on MFD_SEC_CORE
+	help
+	 This driver supports a Samsung S2MPU04 voltage output regulator
+	 via I2C bus. S2MPU04 is comprised of high efficient Buck converters
+	 including Dual-Phase Buck converter, Buck-Boost converter, various LDOs.
+
+config REGULATOR_S2MU003
+	tristate "Samsung S2MU003 voltage regulator"
+	depends on MFD_S2MU003
+	help
+	 This driver supports a Samsung Sub-PMIC S2MU003 voltage output regulator
+	 via I2C bus. S2MU003 is comprised of Buck & LDOs.
+
 config REGULATOR_S5M8767
 	tristate "Samsung S5M8767A voltage regulator"
 	depends on MFD_SEC_CORE
@@ -513,6 +536,17 @@ config REGULATOR_AS3711
 	help
 	  This driver provides support for the voltage regulators on the
 	  AS3711 PMIC
+	  
+config REGULATOR_SM5703
+	tristate "SM5703 regulator"
+	depends on MFD_SM5703
+	help
+	  This driver controls a SM5703 regulator
+	  via I2C bus.
 
+config AP_S2MPU04_LDO16_CONTROL
+	tristate "AP S2MPU04 LDO16 control"
+	help
+	  This enable to control S2MPU04 LDO16 in AP.
+	  
 endif
-

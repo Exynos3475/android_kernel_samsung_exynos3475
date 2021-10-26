@@ -359,6 +359,36 @@ config LEDS_INTEL_SS4200
 	  drive or power LEDs on the front panel.  Using this driver
 	  can stop the front LED from blinking after startup.
 
+config LEDS_S2MU003
+	tristate "LED driver for S2MU003 controllers"
+	depends on LEDS_CLASS
+	depends on MFD_S2MU003
+	help
+	  This option enables support for LEDs driven by Samsung Electronics
+	  S2MU003 controller. This controller uses a FLED & TORCH
+
+config LEDS_S2MU005
+	tristate "LED driver for S2MU005 controllers"
+	depends on LEDS_CLASS
+	depends on MFD_S2MU005
+	help
+	  This option enables support for LEDs driven by Samsung Electronics
+	  S2MU005 controller. This controller uses a FLED & TORCH
+
+config LEDS_S2MU005_FLASH
+	bool "LED driver for S2MU005 Flash"
+	depends on LEDS_S2MU005
+	help
+	  Use LED driver for S2MU005 Flash
+	  If unsure, say N.
+
+config LEDS_S2MU005_RGB
+	bool "LED driver for S2MU005 RGB"
+	depends on LEDS_S2MU005
+	help
+	  Use LED driver for S2MU005 RGB
+	  If unsure, say N.
+
 config LEDS_LT3593
 	tristate "LED driver for LT3593 controllers"
 	depends on LEDS_CLASS
@@ -478,6 +508,38 @@ config LEDS_BLINKM
 	help
 	  This option enables support for the BlinkM RGB LED connected
 	  through I2C. Say Y to enable support for the BlinkM LED.
+
+config LEDS_KTD2026
+	tristate "LED driver for KTD2026 LED"
+	depends on I2C
+	  help
+	  This option enables support for RGB LED driver
+	  accessed via the I2C bus.
+	  KTD2026 is a fully programmable, constant current
+	  three channel LED driver with flexible control interface.
+
+config FLASHLIGHT
+	bool "Flashlight Support"
+	help
+	  This option enables the led sysfs class in /sys/class/flashlight.
+
+config SM_FLASH_LED
+	tristate "Siliconmitus flash LED driver support"
+	depends on FLASHLIGHT
+	help
+	  Say Y here to enable Siliconmitus's flash LED driver HAL architecture
+
+config FLED_SM5703
+	tristate "Siliconmitus SM5703 flash LED driver"
+	depends on SM_FLASH_LED
+	help
+	  A driver for Siliconmitus SM5703 flash LED
+
+config FLED_SM5703_EXT_GPIO
+	bool "External(or ISP) GPIO"
+	  help
+	  Use GPIO pins to enable/disable torch and flash light.
+	  If unsure, say N.
 
 comment "LED Triggers"
 source "drivers/leds/trigger/Kconfig"

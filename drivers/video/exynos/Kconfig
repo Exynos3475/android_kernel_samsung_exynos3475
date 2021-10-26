@@ -34,4 +34,11 @@ config EXYNOS_DP
 	help
 	  This enables support for DP device.
 
+source "drivers/video/exynos/decon_display/Kconfig"
+source "drivers/video/exynos/decon_tv_display/Kconfig"
+
+if SOC_EXYNOS3475
+	source "drivers/video/exynos/decon_3475/Kconfig"
+endif # SOC_EXYNOS3475
+
 endif # EXYNOS_VIDEO

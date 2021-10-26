@@ -2726,7 +2726,8 @@ static struct samsung_gpio_chip exynos5_gpios_4[] = {
 #endif
 
 
-#if defined(CONFIG_ARCH_EXYNOS) && defined(CONFIG_OF)
+#if (defined(CONFIG_SOC_EXYNOS4210) || defined(CONFIG_SOC_EXYNOS5250))
+#ifdef CONFIG_OF
 static int exynos_gpio_xlate(struct gpio_chip *gc,
 			const struct of_phandle_args *gpiospec, u32 *flags)
 {
@@ -2781,13 +2782,14 @@ static __init void exynos_gpiolib_attach_ofnode(struct samsung_gpio_chip *chip,
 	gc->of_gpio_n_cells = 4;
 	gc->of_xlate = exynos_gpio_xlate;
 }
-#elif defined(CONFIG_ARCH_EXYNOS)
+#elif /* CONFIG_OF */
 static __init void exynos_gpiolib_attach_ofnode(struct samsung_gpio_chip *chip,
 						u64 base, u64 offset)
 {
 	return;
 }
-#endif /* defined(CONFIG_ARCH_EXYNOS) && defined(CONFIG_OF) */
+#endif /* CONFIG_OF */
+#endif /* defined(CONFIG_SOC_EXYNOS4210) || defined(CONFIG_SOC_EXYNOS5250)) */
 
 static __init void exynos4_gpiolib_init(void)
 {
@@ -3026,9 +3028,13 @@ static __init int samsung_gpiolib_init(void)
 	*/
 	struct device_node *pctrl_np;
 	static const struct of_device_id exynos_pinctrl_ids[] = {
+		{ .compatible = "samsung,exynos3475-pinctrl", },
 		{ .compatible = "samsung,exynos4210-pinctrl", },
 		{ .compatible = "samsung,exynos4x12-pinctrl", },
 		{ .compatible = "samsung,exynos5250-pinctrl", },
+		{ .compatible = "samsung,exynos5422-pinctrl", },
+		{ .compatible = "samsung,exynos5430-pinctrl", },
+		{ .compatible = "samsung,exynos5433-pinctrl", },
 		{ .compatible = "samsung,exynos5440-pinctrl", },
 		{ }
 	};

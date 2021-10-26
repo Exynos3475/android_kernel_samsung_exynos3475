@@ -287,6 +287,7 @@ extern int sysctl_tcp_thin_dupack;
 extern int sysctl_tcp_early_retrans;
 extern int sysctl_tcp_limit_output_bytes;
 extern int sysctl_tcp_challenge_ack_limit;
+extern int sysctl_tcp_default_init_rwnd;
 
 extern atomic_long_t tcp_memory_allocated;
 extern struct percpu_counter tcp_sockets_allocated;
@@ -354,6 +355,9 @@ extern struct proto tcp_prot;
 #define TCP_ADD_STATS(net, field, val)	SNMP_ADD_STATS((net)->mib.tcp_statistics, field, val)
 
 extern void tcp_init_mem(struct net *net);
+
+
+void inet_twsk_free(struct inet_timewait_sock *tw);
 
 extern void tcp_tasklet_init(void);
 
@@ -1041,6 +1045,8 @@ extern void tcp_set_state(struct sock *sk, int state);
 
 extern void tcp_done(struct sock *sk);
 
+int tcp_abort(struct sock *sk, int err);
+
 static inline void tcp_sack_reset(struct tcp_options_received *rx_opt)
 {
 	rx_opt->dsack = 0;
@@ -1389,6 +1395,8 @@ static inline void tcp_check_send_head(struct sock *sk, struct sk_buff *skb_unli
 {
 	if (sk->sk_send_head == skb_unlinked)
 		sk->sk_send_head = NULL;
+	if (tcp_sk(sk)->highest_sack == skb_unlinked)
+		tcp_sk(sk)->highest_sack = NULL;
 }
 
 static inline void tcp_init_send_head(struct sock *sk)
@@ -1549,6 +1557,8 @@ extern struct sk_buff **tcp4_gro_receive(struct sk_buff **head,
 					 struct sk_buff *skb);
 extern int tcp_gro_complete(struct sk_buff *skb);
 extern int tcp4_gro_complete(struct sk_buff *skb);
+
+extern int tcp_nuke_addr(struct net *net, struct sockaddr *addr);
 
 #ifdef CONFIG_PROC_FS
 extern int tcp4_proc_init(void);

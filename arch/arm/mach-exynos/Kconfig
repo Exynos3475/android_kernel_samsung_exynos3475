@@ -11,6 +11,14 @@ if ARCH_EXYNOS
 
 menu "SAMSUNG EXYNOS SoCs Support"
 
+config ARCH_EXYNOS3
+	bool "SAMSUNG EXYNOS3"
+	select HAVE_ARM_SCU if SMP
+	select HAVE_SMP
+	select HAVE_EXYNOS5_HSI2C if I2C
+	help
+	  Samsung EXYNOS3 (Cortex-A7) SoC based systems
+
 config ARCH_EXYNOS4
 	bool "SAMSUNG EXYNOS4"
 	default y
@@ -24,10 +32,24 @@ config ARCH_EXYNOS5
 	bool "SAMSUNG EXYNOS5"
 	select HAVE_ARM_SCU if SMP
 	select HAVE_SMP
+	select HAVE_EXYNOS5_HSI2C if I2C
 	help
 	  Samsung EXYNOS5 (Cortex-A15) SoC based systems
 
 comment "EXYNOS SoCs"
+
+config SOC_EXYNOS3475
+	bool "SAMSUNG EXYNOS3475"
+	default n
+	depends on ARCH_EXYNOS3
+	select PM_GENERIC_DOMAINS if PM
+	select S5P_PM if PM
+	select S5P_SLEEP if SUSPEND
+	select SAMSUNG_DMADEV
+	select ARM_ERRATA_814220
+	select SECCOMP
+	help
+	  Enable EXYNOS3 SoC support
 
 config CPU_EXYNOS4210
 	bool "SAMSUNG EXYNOS4210"
@@ -71,6 +93,163 @@ config SOC_EXYNOS5250
 	help
 	  Enable EXYNOS5250 SoC support
 
+config SOC_EXYNOS5422
+	bool "SAMSUNG EXYNOS5422"
+	default n
+	depends on ARCH_EXYNOS5
+	select PM_GENERIC_DOMAINS if PM
+	select S5P_PM if PM
+	select S5P_SLEEP if SUSPEND
+	select SAMSUNG_DMADEV
+	help
+	  Enable EXYNOS5422 SoC support
+
+config SOC_EXYNOS5422_REV_0
+	bool "Rev 0.0"
+	depends on SOC_EXYNOS5422
+	help
+	  This option enables for REV 0
+
+config SOC_EXYNOS5430
+	bool "SAMSUNG EXYNOS5430"
+	default n
+	depends on ARCH_EXYNOS5
+	select PM_GENERIC_DOMAINS if PM
+	select S5P_PM if PM
+	select S5P_SLEEP if SUSPEND
+	select SAMSUNG_DMADEV
+	select EXYNOS_HSI2C_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_I2C_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_SPI_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_ADC_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_PWM_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_TMU_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_HDMI_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_TOP_RTC_RESET_DURING_DSTOP if CPU_IDLE
+	help
+	  Enable EXYNOS5430 SoC support
+
+config EXYNOS_ASV
+	bool "ENABLE EXYNOS ASV"
+	default n
+	depends on ARCH_EXYNOS
+
+config EXYNOS_ASV_DYNAMIC_ABB
+	bool "Enable Dynamic ABB"
+	default n
+	depends on EXYNOS_ASV
+
+config EXYNOS_ASV_SUPPORT_RCC
+	bool "Support RCC Table"
+	default n
+	depends on EXYNOS_ASV
+
+config EXYNOS_ASV_MARGIN_TEST
+	bool "Enable Margin Test"
+	default n
+	depends on EXYNOS_ASV
+
+config SKIP_HW_BREAKPOINT
+	bool "support skip hw breakpoint"
+	default n
+	help
+	  Support early param for T32 onchip breakpoint
+
+choice
+	prompt "Revision Type"
+	depends on SOC_EXYNOS5430
+	help
+	  This option selects cpu revision number.
+
+config SOC_EXYNOS5430_REV_1
+	bool "Rev 1.0"
+endchoice
+
+choice
+	prompt "Resolution Type"
+	depends on SOC_EXYNOS5430
+	help
+	  This option selects display resolution type.
+
+config EXYNOS5430_WQHD
+	bool "Resolution WQHD (2560 x 1440)"
+
+config EXYNOS5430_FHD
+	bool "Resolution Full HD (1920 x 1080)"
+
+config EXYNOS5430_HD
+	bool "Resolution HD (1280 x 720)"
+endchoice
+
+menu "Exynos5430 Type"
+	depends on SOC_EXYNOS5430
+
+config SOC_EXYNOS5430_L
+	bool "Exynos5430 L version"
+	help
+	  This option enable exynos5430 lite version
+endmenu
+
+config SOC_EXYNOS5433
+	bool "SAMSUNG EXYNOS5433"
+	default n
+	depends on ARCH_EXYNOS5
+	select PM_GENERIC_DOMAINS if PM
+	select S5P_PM if PM
+	select S5P_SLEEP if SUSPEND
+	select SAMSUNG_DMADEV
+	select EXYNOS_HSI2C_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_SPI_RESET_DURING_DSTOP if CPU_IDLE
+	select EXYNOS_PWM_RESET_DURING_DSTOP if CPU_IDLE
+	select CAL_SYS_PWRDOWN
+	help
+	  Enable EXYNOS5433 SoC support
+
+config CAL_SYS_PWRDOWN
+	bool
+
+choice
+	prompt "Revision Type"
+	depends on SOC_EXYNOS5433
+	help
+	  This option selects cpu revision number.
+
+config SOC_EXYNOS5433_REV_0
+	bool "Rev 0.0"
+
+config SOC_EXYNOS5433_REV_1
+	bool "Rev 1.0"
+
+endchoice
+
+config EXYNOS5430_BTS
+	bool "Bus traffic shaper support"
+	default y
+	depends on SOC_EXYNOS5430
+	help
+	  Enable BTS (Bus traffic shaper) support
+
+config EXYNOS5433_BTS
+	bool "Bus traffic shaper support"
+	default y
+	depends on SOC_EXYNOS5433
+	help
+	  Enable BTS (Bus traffic shaper) support
+
+config EXYNOS5422_BTS
+	bool "Bus traffic shaper support"
+	default y
+	depends on SOC_EXYNOS5422
+	help
+	  Enable BTS (Bus traffic shaper) support
+
+config EXYNOS3475_BTS
+	bool "Bus traffic shaper support"
+	default y
+	depends on SOC_EXYNOS3475
+	help
+	  Enable BTS (Bus traffic shaper) support
+
 config SOC_EXYNOS5440
 	bool "SAMSUNG EXYNOS5440"
 	default y
@@ -84,6 +263,57 @@ config SOC_EXYNOS5440
 	help
 	  Enable EXYNOS5440 SoC support
 
+menuconfig EXYNOS_CORESIGHT
+	bool "Enable Coresight of exynos"
+	depends on ARCH_EXYNOS
+	default n
+
+config EXYNOS_CORESIGHT_PC_INFO
+	bool "Show Porgram Counter information"
+	depends on EXYNOS_CORESIGHT
+	default y
+	help
+	  Show Program Counter information When kernel panic.
+
+config PC_ITERATION
+	int "Number of Program Coutner information"
+	depends on EXYNOS_CORESIGHT_PC_INFO
+	range 1 10
+	default 5
+	help
+	  Print out Program Counter as iteration value.
+
+config EXYNOS_CORESIGHT_MAINTAIN_DBG_REG
+	bool "Save/Restore Debug Registers"
+	depends on EXYNOS_CORESIGHT
+	default n
+	help
+	  When core power is down, debug registers are not mainained data
+	  and OS-lock is set. To maintain data, debug registers's data must
+	  save in /restore from memory. If OS-lock is set, debugging to use
+	  trace32 is impossible. So OS-lock must clear when core power is up.
+	  This config must enable only using iTSP program.
+
+config EXYNOS5_DYNAMIC_CPU_HOTPLUG
+	bool "Dynamic CPU Hotplug support"
+	depends on CPU_FREQ
+	help
+		Enable Dynamic CPU Hotplug
+
+config EXYNOS_CONTENT_PATH_PROTECTION
+	bool "Exynos Content Path Protection"
+	depends on (ARM_TRUSTZONE)
+	default n
+	help
+	  Enable content path protection of EXYNOS.
+
+config EXYNOS_SMC_WRAPPER
+	bool "Exynos SMC Wrapper"
+	depends on ARM_TRUSTZONE
+	default n
+	help
+	  Enable exynos_smc wrapper
+
 config EXYNOS_ATAGS
 	bool "ATAGS based boot for EXYNOS (deprecated)"
 	depends on !ARCH_MULTIPLATFORM
@@ -94,6 +324,17 @@ config EXYNOS_ATAGS
 	  through device tree. This enables support for board files using
 	  the traditional ATAGS boot format.
 	  Note that this option is not available for multiplatform builds.
+
+config EXYNOS5_SETUP_MIPIPHY
+	bool
+	depends on (VIDEO_EXYNOS_FIMC_IS || DECON_MIPI_DSI || EXYNOS_MIPI_DSI)
+	default y
+	help
+	  Compile in common setup code for MIPI-CSIS devices
+
+config SAMSUNG_PRODUCT_SHIP
+	bool "set up for product shipping"
+	default n
 
 if EXYNOS_ATAGS
 
@@ -405,6 +646,19 @@ endif
 
 comment "Flattened Device Tree based board for EXYNOS SoCs"
 
+config MACH_EXYNOS3_DT
+	bool "SAMSUNG EXYNOS5 Machine using device tree"
+	default y
+	depends on ARCH_EXYNOS3
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	help
+	  Machine support for Samsung EXYNOS3 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS3 SoC based board.
+
 config MACH_EXYNOS4_DT
 	bool "Samsung Exynos4 Machine using device tree"
 	depends on ARCH_EXYNOS4
@@ -429,10 +683,92 @@ config MACH_EXYNOS5_DT
 	depends on ARCH_EXYNOS5
 	select ARM_AMBA
 	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
 	select USE_OF
 	help
 	  Machine support for Samsung EXYNOS5 machine with device tree enabled.
 	  Select this if a fdt blob is available for the EXYNOS5 SoC based board.
+
+config MACH_SMDK3475
+	bool "SAMSUNG SMDK3475 Machine using device tree"
+	depends on ARCH_EXYNOS3
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	select CAL_SYS_PWRDOWN
+	help
+	  Machine support for Samsung EXYNOS3475 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS3475 SoC based board.
+
+config MACH_UNIVERSAL3475
+	bool "SAMSUNG UNIVERSAL3475 Machine using device tree"
+	depends on ARCH_EXYNOS3
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	select CAL_SYS_PWRDOWN
+	help
+	  Machine support for Samsung EXYNOS3475 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS3475 SoC based board.
+
+config MACH_SMDK5422
+	bool "SAMSUNG SMDK5422 Machine using device tree"
+	default y
+	depends on ARCH_EXYNOS5 && SOC_EXYNOS5422
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	help
+	  Machine support for Samsung EXYNOS5422 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS5422 SoC based board.
+
+config MACH_XYREF5422
+	bool "SAMSUNG XYREF5422 Machine using device tree"
+	default y
+	depends on ARCH_EXYNOS5 && SOC_EXYNOS5422
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	help
+	  Machine support for Samsung EXYNOS5422 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS5422 SoC based board.
+
+config MACH_XYREF5430
+	bool "SAMSUNG XYREF5430 Machine using device tree"
+	default y
+	depends on ARCH_EXYNOS5 && SOC_EXYNOS5430
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	help
+	  Machine support for Samsung EXYNOS5430 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS5430 SoC based board.
+
+config MACH_ESPRESSO5433
+	bool "SAMSUNG ESPRESSO5433 Machine using device tree"
+	default y
+	depends on ARCH_EXYNOS5 && SOC_EXYNOS5433
+	select ARM_AMBA
+	select CLKSRC_OF
+	select PINCTRL
+	select PINCTRL_EXYNOS
+	select USE_OF
+	select MIGHT_HAVE_PCI
+	select PCI_DOMAINS if PCI
+	help
+	  Machine support for Samsung EXYNOS5433 machine with device tree enabled.
+	  Select this if a fdt blob is available for the EXYNOS5433 SoC based board.
 
 if ARCH_EXYNOS4
 
@@ -453,4 +789,124 @@ endif
 
 endmenu
 
+# Reset IPs during LPA/DSTOP
+config EXYNOS_HSI2C_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_I2C_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_SPI_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_ADC_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_PWM_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_TMU_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_HDMI_RESET_DURING_DSTOP
+	bool
+
+config EXYNOS_TOP_RTC_RESET_DURING_DSTOP
+	bool
+
 endif
+
+config TIMA
+	bool "Enable TIMA(Trustzone based Integrity Measurement Archtecture feature"
+	default n
+
+config TIMA_RKP
+	bool "Enable RKP (Realtime Kernel Protection) TIMA feature"
+	depends on TIMA
+	default n
+
+config TIMA_RKP_30
+	bool "Enable RKP (Realtime Kernel Protection) TIMA 3.0 feature"
+	depends on TIMA_RKP
+	default y
+	help
+		TIMA RKP 30 features, including kernel fault fixup and optimized tima_pg_is_protected
+
+config TIMA_RKP_L1_TABLES
+	bool
+	depends on TIMA_RKP
+	default y
+	help
+	  TIMA taking over management of L1 tables.
+
+config TIMA_RKP_L2_TABLES
+	bool
+	depends on TIMA_RKP
+	default y
+	help
+	  TIMA taking over management L2 tables too.
+
+config TIMA_RKP_L2_GROUP
+	bool
+	depends on TIMA_RKP_L2_TABLES
+	default n
+	help
+	  TIMA grouping page table writes
+
+config TIMA_RKP_LAZY_MMU
+	bool
+	depends on TIMA_RKP_L2_TABLES
+	default	y 
+	help
+	  TIMA lazy MMU for L2 pages
+
+config TIMA_IOMMU_OPT
+	bool
+	depends on TIMA_RKP_L2_TABLES
+	default	y
+	help
+	  TIMA IOMMU optimization for L2 pages
+	
+config TIMA_KMAP_OPT
+	bool
+	depends on TIMA_RKP_L2_TABLES
+	default	y
+	help
+	  TIMA KMAP optimization for L2 pages
+
+config TIMA_DALVIKHEAP_OPT
+	bool
+	depends on TIMA_RKP_L2_TABLES
+	default	y 
+	help
+	  TIMA DALVIK HEAP optimization for L2 pages
+
+config TIMA_RKP_DEBUG
+	bool
+	depends on TIMA_RKP
+	default n
+	help
+	  not workable in  K3G right now, no code ported in for this part.TIMA debug infrastructure.
+
+config TIMA_TEST_INFRA
+	tristate "Testing infrastructure for TIMA"
+	default n
+	help
+	  Kernel bits of the TIMA test infrastructure
+     
+config SEC_BAT_AUT
+	bool "Samsung TN Bat Automation Test Feature"
+	default n
+	help
+	  Samsung TN Bat Automation Test
+
+# Margin up for Xcover3velte project only
+config MIF_VOLT_MARGINE_UP
+	bool "Avoiding Kernel Lockup Because The Abnormal CPU State"
+	default n
+	help
+
+# CP Secure boot
+config CP_SECURE_BOOT
+	bool "Support CP Secure Boot"
+

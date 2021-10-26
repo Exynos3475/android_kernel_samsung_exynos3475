@@ -134,6 +134,11 @@ struct regulation_constraints {
 	unsigned always_on:1;	/* regulator never off when system is on */
 	unsigned boot_on:1;	/* bootloader/firmware enabled regulator */
 	unsigned apply_uV:1;	/* apply uV constraint if min == max */
+
+	/* expected consumer
+	 * will not set lower voltage unless all consumer is registered
+	 */
+	unsigned int expected_consumer;
 };
 
 /**

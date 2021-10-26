@@ -1,6 +1,7 @@
 #include <linux/export.h>
 #include <linux/sched.h>
 #include <linux/stacktrace.h>
+#include <linux/mm.h>
 
 #include <asm/stacktrace.h>
 
@@ -31,13 +32,20 @@ int notrace unwind_frame(struct stackframe *frame)
 	high = ALIGN(low, THREAD_SIZE);
 
 	/* check current frame pointer is within bounds */
-	if (fp < (low + 12) || fp + 4 >= high)
+	if (fp < low + 12 || fp > high - 4)
 		return -EINVAL;
 
 	/* restore the registers from the stack frame */
 	frame->fp = *(unsigned long *)(fp - 12);
 	frame->sp = *(unsigned long *)(fp - 8);
 	frame->pc = *(unsigned long *)(fp - 4);
+
+	/* next frame must be above the current frame */
+	if (frame->fp < fp)
+		return -EINVAL;
+
+	if (!virt_addr_valid(frame->fp))
+		return -EFAULT;
 
 	return 0;
 }

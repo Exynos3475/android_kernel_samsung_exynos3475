@@ -1,6 +1,7 @@
 # S3c24XX Platform Support
 snd-soc-s3c24xx-objs := dma.o
 snd-soc-idma-objs := idma.o
+snd-soc-fdma-objs := fdma.o
 snd-soc-s3c24xx-i2s-objs := s3c24xx-i2s.o
 snd-soc-s3c2412-i2s-objs := s3c2412-i2s.o
 snd-soc-ac97-objs := ac97.o
@@ -8,6 +9,9 @@ snd-soc-s3c-i2s-v2-objs := s3c-i2s-v2.o
 snd-soc-samsung-spdif-objs := spdif.o
 snd-soc-pcm-objs := pcm.o
 snd-soc-i2s-objs := i2s.o
+snd-soc-eax-dai-objs := eax-dai.o
+snd-soc-eax-dma-objs := eax-dma.o
+snd-soc-exynos-regmap-fw-objs := exynos_regmap_fw.o
 
 obj-$(CONFIG_SND_SOC_SAMSUNG) += snd-soc-s3c24xx.o
 obj-$(CONFIG_SND_S3C24XX_I2S) += snd-soc-s3c24xx-i2s.o
@@ -17,7 +21,16 @@ obj-$(CONFIG_SND_S3C_I2SV2_SOC) += snd-soc-s3c-i2s-v2.o
 obj-$(CONFIG_SND_SAMSUNG_SPDIF) += snd-soc-samsung-spdif.o
 obj-$(CONFIG_SND_SAMSUNG_PCM) += snd-soc-pcm.o
 obj-$(CONFIG_SND_SAMSUNG_I2S) += snd-soc-i2s.o
-obj-$(CONFIG_SND_SAMSUNG_I2S) += snd-soc-idma.o
+obj-$(CONFIG_SND_SAMSUNG_IDMA) += snd-soc-idma.o
+obj-$(CONFIG_SND_SAMSUNG_FAKEDMA) += snd-soc-fdma.o
+ifeq ($(CONFIG_SND_SAMSUNG_AUDSS),y)
+obj-$(CONFIG_SOC_EXYNOS5422) += lpass.o lpass-exynos5422.o
+obj-$(CONFIG_SOC_EXYNOS5430) += lpass.o lpass-exynos5430.o
+obj-$(CONFIG_SOC_EXYNOS5433) += lpass.o lpass-exynos5433.o
+obj-$(CONFIG_SOC_EXYNOS3475) += lpass-exynos3475.o
+endif
+obj-$(CONFIG_SND_SOC_SAMSUNG) += snd-soc-eax-dai.o snd-soc-eax-dma.o
+obj-$(CONFIG_SND_SOC_REGMAP_FIRMWARE) += snd-soc-exynos-regmap-fw.o
 
 # S3C24XX Machine Support
 snd-soc-jive-wm8750-objs := jive_wm8750.o
@@ -43,6 +56,12 @@ snd-soc-tobermory-objs := tobermory.o
 snd-soc-lowland-objs := lowland.o
 snd-soc-littlemill-objs := littlemill.o
 snd-soc-bells-objs := bells.o
+snd-soc-espresso5433-wm5110-objs := espresso5433_wm5110.o
+snd-soc-xyref5430-es515-objs := xyref5430_es515.o
+snd-soc-smdk5422-wm8994-objs := smdk5422_wm8994.o
+snd-soc-smdk3475-cod3025x-objs := smdk3475-cod3025x.o
+snd-soc-universal3475-cod3025x-objs := universal3475-cod3025x.o
+snd-soc-xyref5422-es515-objs := xyref5422_es515.o
 
 obj-$(CONFIG_SND_SOC_SAMSUNG_JIVE_WM8750) += snd-soc-jive-wm8750.o
 obj-$(CONFIG_SND_SOC_SAMSUNG_NEO1973_WM8753) += snd-soc-neo1973-wm8753.o
@@ -67,3 +86,11 @@ obj-$(CONFIG_SND_SOC_TOBERMORY) += snd-soc-tobermory.o
 obj-$(CONFIG_SND_SOC_LOWLAND) += snd-soc-lowland.o
 obj-$(CONFIG_SND_SOC_LITTLEMILL) += snd-soc-littlemill.o
 obj-$(CONFIG_SND_SOC_BELLS) += snd-soc-bells.o
+obj-$(CONFIG_SND_SOC_SAMSUNG_ESPRESSO5433_WM5110) += snd-soc-espresso5433-wm5110.o
+obj-$(CONFIG_SND_SOC_SAMSUNG_XYREF5430_ES515) += snd-soc-xyref5430-es515.o
+obj-$(CONFIG_SND_SOC_SAMSUNG_SMDK5422_WM8994) += snd-soc-smdk5422-wm8994.o
+obj-$(CONFIG_SND_SOC_SAMSUNG_SMDK3475_COD3025X) += snd-soc-smdk3475-cod3025x.o
+obj-$(CONFIG_SND_SOC_SAMSUNG_UNIVERSAL3475_COD3025X) += snd-soc-universal3475-cod3025x.o
+obj-$(CONFIG_SND_SOC_SAMSUNG_XYREF5422_ES515) += snd-soc-xyref5422-es515.o
+
+obj-$(CONFIG_SND_SAMSUNG_SEIREN) += seiren/

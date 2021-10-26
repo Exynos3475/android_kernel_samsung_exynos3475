@@ -74,6 +74,9 @@
 #include <linux/ptrace.h>
 #include <linux/blkdev.h>
 #include <linux/elevator.h>
+#if defined(CONFIG_SEC_INITCALL_DEBUG)
+#include <linux/sec_debug.h>
+#endif
 
 #include <asm/io.h>
 #include <asm/bugs.h>
@@ -672,6 +675,11 @@ static int __init_or_module do_one_initcall_debug(initcall_t fn)
 	pr_debug("initcall %pF returned %d after %lld usecs\n",
 		 fn, ret, duration);
 
+#if defined(CONFIG_SEC_INITCALL_DEBUG)
+	if (SEC_INITCALL_DEBUG_MIN_TIME < duration)
+		sec_initcall_debug_add(fn, duration);
+#endif
+
 	return ret;
 }
 
@@ -806,14 +814,54 @@ static int run_init_process(const char *init_filename)
 		(const char __user *const __user *)envp_init);
 }
 
+#ifdef CONFIG_DEFERRED_INITCALLS
+extern initcall_t __deferred_initcall_start[], __deferred_initcall_end[];
+
+/* call deferred init routines */
+void __ref do_deferred_initcalls(void)
+{
+	initcall_t *call;
+	static int already_run=0;
+
+	if (already_run) {
+		printk("do_deferred_initcalls() has already run\n");
+		return;
+	}
+
+	already_run=1;
+
+	printk("Running do_deferred_initcalls()\n");
+
+	for(call = __deferred_initcall_start;
+		call < __deferred_initcall_end; call++)
+		do_one_initcall(*call);
+
+	flush_scheduled_work();
+
+	free_initmem();
+}
+#endif
+
+#ifdef CONFIG_SEC_GPIO_DVS
+extern void gpio_dvs_check_initgpio(void);
+#endif
+
 static noinline void __init kernel_init_freeable(void);
 
 static int __ref kernel_init(void *unused)
 {
 	kernel_init_freeable();
+#ifdef CONFIG_SEC_GPIO_DVS
+	/* This function must be located in appropriate INIT position
+	 * in accordance with the specification of each BB vendor.
+	 */
+	gpio_dvs_check_initgpio();
+#endif
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
+#ifndef CONFIG_DEFERRED_INITCALLS
 	free_initmem();
+#endif
 	mark_rodata_ro();
 	system_state = SYSTEM_RUNNING;
 	numa_default_policy();

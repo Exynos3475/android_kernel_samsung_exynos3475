@@ -23,7 +23,9 @@
 
 #include "timed_output.h"
 #include "timed_gpio.h"
-
+#if defined(CONFIG_OF)
+#include <linux/of_gpio.h>
+#endif
 
 struct timed_gpio_data {
 	struct timed_output_dev dev;
@@ -62,11 +64,11 @@ static void gpio_enable(struct timed_output_dev *dev, int value)
 		container_of(dev, struct timed_gpio_data, dev);
 	unsigned long	flags;
 
-	spin_lock_irqsave(&data->lock, flags);
-
 	/* cancel previous timer and set GPIO according to value */
 	hrtimer_cancel(&data->timer);
 	gpio_direction_output(data->gpio, data->active_low ? !value : !!value);
+
+	spin_lock_irqsave(&data->lock, flags);
 
 	if (value > 0) {
 		if (value > data->max_timeout)
@@ -80,6 +82,88 @@ static void gpio_enable(struct timed_output_dev *dev, int value)
 	spin_unlock_irqrestore(&data->lock, flags);
 }
 
+#if defined(CONFIG_OF)
+static struct timed_gpio_platform_data *timed_gpio_get_dt(struct device *dev)
+{
+	struct device_node *node, *pp;
+	struct timed_gpio_platform_data *pdata;
+	struct timed_gpio *timed_gpio;
+	int ret = 0, num_gpios = 0, i = 0;
+
+	node = dev->of_node;
+	if (!node) {
+		ret = -ENODEV;
+		goto err_out;
+	}
+
+	num_gpios = of_get_child_count(node);
+	if (!num_gpios) {
+		ret = -ENODEV;
+		goto err_out;
+	}
+
+	pdata = kzalloc(sizeof(*pdata) + num_gpios * (sizeof(*timed_gpio)),
+		GFP_KERNEL);
+	if (!pdata) {
+		ret = -ENOMEM;
+		goto err_out;
+	}
+
+	pdata->gpios = (struct timed_gpio *)(pdata + 1);
+	pdata->num_gpios = num_gpios;
+
+	for_each_child_of_node(node, pp) {
+		int gpio = 0;
+		enum of_gpio_flags flags;
+
+		if (!of_find_property(pp, "gpios", NULL)) {
+			dev_warn(dev, "Found timed gpio without gpios\n");
+			pdata->num_gpios--;
+			continue;
+		}
+
+		gpio = of_get_gpio_flags(pp, 0, &flags);
+		if (gpio < 0) {
+			ret = gpio;
+			if (ret != -EPROBE_DEFER)
+				dev_err(dev,
+					"Failed to get gpio flags : %d\n",
+					ret);
+			goto err_free_pdata;
+		}
+
+		timed_gpio = &pdata->gpios[i++];
+		timed_gpio->gpio = gpio;
+		timed_gpio->active_low = flags & OF_GPIO_ACTIVE_LOW;
+		timed_gpio->name = of_get_property(pp, "timed_gpio,name", NULL);
+
+		if (of_property_read_u32(pp, "timed_gpio,max_timeout",
+					 &timed_gpio->max_timeout)) {
+			if (10000 < timed_gpio->max_timeout)
+				timed_gpio->max_timeout = 10000;
+		}
+	}
+
+	if (!pdata->num_gpios) {
+		ret = -EINVAL;
+		goto err_free_pdata;
+	}
+
+	return pdata;
+
+err_free_pdata:
+	kfree(pdata);
+err_out:
+	return ERR_PTR(ret);
+}
+
+static struct of_device_id timed_gpio_of_match[] = {
+	{ .compatible = "timed_gpio", },
+	{ },
+};
+MODULE_DEVICE_TABLE(of, timed_gpio_of_match);
+#endif
+
 static int timed_gpio_probe(struct platform_device *pdev)
 {
 	struct timed_gpio_platform_data *pdata = pdev->dev.platform_data;
@@ -87,8 +171,16 @@ static int timed_gpio_probe(struct platform_device *pdev)
 	struct timed_gpio_data *gpio_data, *gpio_dat;
 	int i, ret;
 
-	if (!pdata)
+	if (!pdata) {
+#if defined(CONFIG_OF)
+		pdata = timed_gpio_get_dt(&pdev->dev);
+		if (IS_ERR(pdata))
+			return -EBUSY;
+	}
+#else
 		return -EBUSY;
+	}
+#endif
 
 	gpio_data = kzalloc(sizeof(struct timed_gpio_data) * pdata->num_gpios,
 			GFP_KERNEL);
@@ -158,6 +250,9 @@ static struct platform_driver timed_gpio_driver = {
 	.driver		= {
 		.name		= TIMED_GPIO_NAME,
 		.owner		= THIS_MODULE,
+#if defined(CONFIG_OF)
+		.of_match_table = of_match_ptr(timed_gpio_of_match),
+#endif
 	},
 };
 

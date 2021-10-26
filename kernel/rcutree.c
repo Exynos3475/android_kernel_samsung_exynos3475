@@ -53,6 +53,7 @@
 #include <linux/delay.h>
 #include <linux/stop_machine.h>
 #include <linux/random.h>
+#include <linux/exynos-ss.h>
 
 #include "rcutree.h"
 #include <trace/events/rcu.h>

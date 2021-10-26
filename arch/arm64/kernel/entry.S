@@ -25,9 +25,9 @@
 #include <asm/asm-offsets.h>
 #include <asm/errno.h>
 #include <asm/esr.h>
+#include <asm/ptrace.h>
 #include <asm/thread_info.h>
 #include <asm/unistd.h>
-#include <asm/unistd32.h>
 
 /*
  * Bad Abort numbers
@@ -360,7 +360,7 @@ el0_sync:
 	cmp	x24, #ESR_EL1_EC_FP_EXC64	// FP/ASIMD exception
 	b.eq	el0_fpsimd_exc
 	cmp	x24, #ESR_EL1_EC_SYS64		// configurable trap
-	b.eq	el0_undef
+	b.eq	el0_sys
 	cmp	x24, #ESR_EL1_EC_SP_ALIGN	// stack alignment exception
 	b.eq	el0_sp_pc
 	cmp	x24, #ESR_EL1_EC_PC_ALIGN	// pc alignment exception
@@ -477,6 +477,15 @@ el0_undef:
 	 */
 	mov	x0, sp
 	b	do_undefinstr
+el0_sys:
+	/*
+	 * System instructions, for trapped cache maintenance instructions
+	 */
+	enable_dbg
+	enable_irq
+	mov	x0, x25
+	mov	x1, sp
+	b	do_sysinstr
 el0_dbg:
 	/*
 	 * Debug exception handling
@@ -658,10 +667,13 @@ ENDPROC(el0_svc)
 	 * switches, and waiting for our parent to respond.
 	 */
 __sys_trace:
-	mov	x1, sp
-	mov	w0, #0				// trace entry
-	bl	syscall_trace
+	mov	x0, sp
+	bl	syscall_trace_enter
 	adr	lr, __sys_trace_return		// return address
+	cmp	w0, #RET_SKIP_SYSCALL_TRACE	// skip syscall and tracing?
+	b.eq	ret_to_user
+	cmp	w0, #RET_SKIP_SYSCALL		// skip syscall?
+	b.eq	__sys_trace_return_skipped
 	uxtw	scno, w0			// syscall number (possibly new)
 	mov	x1, sp				// pointer to regs
 	cmp	scno, sc_nr			// check upper syscall limit
@@ -675,9 +687,9 @@ __sys_trace:
 
 __sys_trace_return:
 	str	x0, [sp]			// save returned x0
-	mov	x1, sp
-	mov	w0, #1				// trace exit
-	bl	syscall_trace
+__sys_trace_return_skipped:			// x0 already in regs[0]
+	mov	x0, sp
+	bl	syscall_trace_exit
 	b	ret_to_user
 
 /*

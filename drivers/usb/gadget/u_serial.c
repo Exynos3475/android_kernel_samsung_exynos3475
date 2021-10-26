@@ -383,7 +383,13 @@ __acquires(&port->port_lock)
 
 		req->length = len;
 		list_del(&req->list);
-		req->zero = (gs_buf_data_avail(&port->port_write_buf) == 0);
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+				req->zero = (gs_buf_data_avail(&port->port_write_buf) == 0)
+								&&	(req->length % in->maxpacket == 0);
+#else
+				req->zero = (gs_buf_data_avail(&port->port_write_buf) == 0);
+#endif
+
 
 		pr_vdebug(PREFIX "%d: tx len=%d, 0x%02x 0x%02x 0x%02x ...\n",
 				port->port_num, len, *((u8 *)req->buf),
@@ -695,7 +701,11 @@ static int gs_start_io(struct gs_port *port)
 	/* queue read requests */
 	port->n_read = 0;
 	started = gs_start_rx(port);
-
+	if (!port->port_usb || !port->port.tty) {
+		printk(KERN_ERR "usb:[%s] port_usb or port_tty is NULL!! started(%d)\n",
+						__func__, started);
+		return -EIO;
+	}
 	/* unblock any pending writes into our circular buffer */
 	if (started) {
 		tty_wakeup(port->port.tty);
@@ -1126,6 +1136,7 @@ int gserial_alloc_line(unsigned char *line_num)
 
 	tty_dev = tty_port_register_device(&ports[port_num].port->port,
 			gs_tty_driver, port_num, NULL);
+
 	if (IS_ERR(tty_dev)) {
 		struct gs_port	*port;
 		pr_err("%s: failed to register tty for port %d, err %ld\n",

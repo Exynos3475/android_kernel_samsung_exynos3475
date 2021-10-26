@@ -92,6 +92,18 @@
 		{.reg = xreg, .rreg = xreg, .shift = xshift, \
 		 .rshift = xshift, .min = xmin, .max = xmax, \
 		 .platform_max = xmax, .invert = xinvert} }
+#define SOC_SINGLE_RANGE_EXT_TLV(xname, xreg, xshift, xmin, xmax, xinvert,\
+	 xhandler_get, xhandler_put, tlv_array) \
+{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname),\
+	.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ |\
+		 SNDRV_CTL_ELEM_ACCESS_READWRITE,\
+	.tlv.p = (tlv_array), \
+	.info = snd_soc_info_volsw_range, \
+	.get = xhandler_get, .put = xhandler_put, \
+	.private_value = (unsigned long)&(struct soc_mixer_control) \
+		{.reg = xreg, .rreg = xreg, .shift = xshift, \
+		 .rshift = xshift, .min = xmin, .max = xmax, \
+		 .platform_max = xmax, .invert = xinvert} }
 #define SOC_DOUBLE(xname, reg, shift_left, shift_right, max, invert) \
 {	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname),\
 	.info = snd_soc_info_volsw, .get = snd_soc_get_volsw, \
@@ -252,6 +264,13 @@
 		((unsigned long)&(struct soc_bytes)           \
 		{.base = xbase, .num_regs = xregs,	      \
 		 .mask = xmask }) }
+
+#define SND_SOC_BYTES_EXT(xname, xcount, xhandler_get, xhandler_put) \
+{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.info = snd_soc_bytes_info_ext, \
+	.get = xhandler_get, .put = xhandler_put, \
+	.private_value = (unsigned long)&(struct soc_bytes_ext) \
+		{.max = xcount} }
 
 #define SOC_SINGLE_XR_SX(xname, xregbase, xregcount, xnbits, \
 		xmin, xmax, xinvert) \
@@ -473,6 +492,8 @@ void snd_soc_free_ac97_codec(struct snd_soc_codec *codec);
 struct snd_kcontrol *snd_soc_cnew(const struct snd_kcontrol_new *_template,
 				  void *data, const char *long_name,
 				  const char *prefix);
+struct snd_kcontrol *snd_soc_card_get_kcontrol(struct snd_soc_card *soc_card,
+					       const char *name);
 int snd_soc_add_codec_controls(struct snd_soc_codec *codec,
 	const struct snd_kcontrol_new *controls, int num_controls);
 int snd_soc_add_platform_controls(struct snd_soc_platform *platform,
@@ -528,6 +549,8 @@ int snd_soc_bytes_get(struct snd_kcontrol *kcontrol,
 		      struct snd_ctl_elem_value *ucontrol);
 int snd_soc_bytes_put(struct snd_kcontrol *kcontrol,
 		      struct snd_ctl_elem_value *ucontrol);
+int snd_soc_bytes_info_ext(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_info *ucontrol);
 int snd_soc_info_xr_sx(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_info *uinfo);
 int snd_soc_get_xr_sx(struct snd_kcontrol *kcontrol,
@@ -937,6 +960,8 @@ struct snd_soc_dai_link {
 struct snd_soc_codec_conf {
 	const char *dev_name;
 
+	const struct device_node *of_node;
+
 	/*
 	 * optional map of kcontrol, widget and path name prefixes that are
 	 * associated per device
@@ -953,6 +978,8 @@ struct snd_soc_codec_conf {
 struct snd_soc_aux_dev {
 	const char *name;		/* Codec name */
 	const char *codec_name;		/* for multi-codec */
+
+	const struct device_node *of_node;
 
 	/* codec/machine specific init - e.g. add machine controls */
 	int (*init)(struct snd_soc_dapm_context *dapm);
@@ -1092,6 +1119,10 @@ struct soc_bytes {
 	int base;
 	int num_regs;
 	u32 mask;
+};
+
+struct soc_bytes_ext {
+	int max;
 };
 
 /* multi register control */

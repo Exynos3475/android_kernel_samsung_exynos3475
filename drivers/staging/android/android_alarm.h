@@ -59,7 +59,9 @@ enum android_alarm_return_flags {
 #define ANDROID_ALARM_SET_RTC               _IOW('a', 5, struct timespec)
 #define ANDROID_ALARM_BASE_CMD(cmd)         (cmd & ~(_IOC(0, 0, 0xf0, 0)))
 #define ANDROID_ALARM_IOCTL_TO_TYPE(cmd)    (_IOC_NR(cmd) >> 4)
-
+#if defined(CONFIG_RTC_ALARM_BOOT)
+	#define ANDROID_ALARM_SET_ALARM_BOOT	_IOW('a', 7, struct timespec)
+#endif
 
 #ifdef CONFIG_COMPAT
 #define ANDROID_ALARM_SET_COMPAT(type)		ALARM_IOW(2, type, \
@@ -70,6 +72,10 @@ enum android_alarm_return_flags {
 							struct compat_timespec)
 #define ANDROID_ALARM_SET_RTC_COMPAT		_IOW('a', 5, \
 							struct compat_timespec)
+#if defined(CONFIG_RTC_ALARM_BOOT)
+#define ANDROID_ALARM_SET_ALARM_BOOT_COMPAT	    _IOW('a', 7, \
+							struct compat_timespec)
+#endif
 #define ANDROID_ALARM_IOCTL_NR(cmd)		(_IOC_NR(cmd) & ((1<<4)-1))
 #define ANDROID_ALARM_COMPAT_TO_NORM(cmd)  \
 				ALARM_IOW(ANDROID_ALARM_IOCTL_NR(cmd), \

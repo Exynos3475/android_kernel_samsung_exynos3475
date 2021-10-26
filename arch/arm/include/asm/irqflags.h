@@ -3,6 +3,7 @@
 
 #ifdef __KERNEL__
 
+#include <linux/exynos-ss.h>
 #include <asm/ptrace.h>
 
 /*
@@ -38,7 +39,6 @@ static inline void arch_local_irq_disable(void)
 		:
 		: "memory", "cc");
 }
-
 #define local_fiq_enable()  __asm__("cpsie f	@ __stf" : : : "memory", "cc")
 #define local_fiq_disable() __asm__("cpsid f	@ __clf" : : : "memory", "cc")
 #else

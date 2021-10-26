@@ -158,6 +158,7 @@ struct dentry_operations {
 	char *(*d_dname)(struct dentry *, char *, int);
 	struct vfsmount *(*d_automount)(struct path *);
 	int (*d_manage)(struct dentry *, bool);
+	void (*d_canonical_path)(const struct path *, struct path *);
 } ____cacheline_aligned;
 
 /*
@@ -209,6 +210,7 @@ struct dentry_operations {
 	(DCACHE_MOUNTED|DCACHE_NEED_AUTOMOUNT|DCACHE_MANAGE_TRANSIT)
 
 #define DCACHE_DENTRY_KILLED	0x100000
+#define DCACHE_WILL_INVALIDATE		0x80000000 /* will be invalidated */
 
 extern seqlock_t rename_lock;
 
@@ -332,6 +334,7 @@ extern int d_validate(struct dentry *, struct dentry *);
  * helper function for dentry_operations.d_dname() members
  */
 extern char *dynamic_dname(struct dentry *, char *, int, const char *, ...);
+extern char *simple_dname(struct dentry *, char *, int);
 
 extern char *__d_path(const struct path *, const struct path *, char *, int);
 extern char *d_absolute_path(const struct path *, char *, int);
@@ -410,5 +413,12 @@ static inline bool d_mountpoint(struct dentry *dentry)
 }
 
 extern int sysctl_vfs_cache_pressure;
+
+struct name_snapshot {
+	const char *name;
+	char inline_name[DNAME_INLINE_LEN];
+};
+void take_dentry_name_snapshot(struct name_snapshot *, struct dentry *);
+void release_dentry_name_snapshot(struct name_snapshot *);
 
 #endif	/* __LINUX_DCACHE_H */

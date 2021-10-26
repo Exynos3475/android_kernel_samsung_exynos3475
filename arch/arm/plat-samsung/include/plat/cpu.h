@@ -40,12 +40,22 @@ extern unsigned long samsung_cpu_id;
 #define S5PV210_CPU_ID		0x43110000
 #define S5PV210_CPU_MASK	0xFFFFF000
 
+#define EXYNOS3475_SOC_ID	0xE3475000
+#define EXYNOS3_SOC_MASK	0xFFFFF000
+
 #define EXYNOS4210_CPU_ID	0x43210000
 #define EXYNOS4212_CPU_ID	0x43220000
 #define EXYNOS4412_CPU_ID	0xE4412200
 #define EXYNOS4_CPU_MASK	0xFFFE0000
 
 #define EXYNOS5250_SOC_ID	0x43520000
+#ifdef CONFIG_SOC_EXYNOS5422_REV_0
+#define EXYNOS5422_SOC_ID	0xE5422000
+#else
+#define EXYNOS5422_SOC_ID	0xE5420000
+#endif
+#define EXYNOS5430_SOC_ID	0xE5430000
+#define EXYNOS5433_SOC_ID	0xE5433000
 #define EXYNOS5440_SOC_ID	0xE5440000
 #define EXYNOS5_SOC_MASK	0xFFFFF000
 
@@ -63,10 +73,14 @@ IS_SAMSUNG_CPU(s5p6440, S5P6440_CPU_ID, S5P64XX_CPU_MASK)
 IS_SAMSUNG_CPU(s5p6450, S5P6450_CPU_ID, S5P64XX_CPU_MASK)
 IS_SAMSUNG_CPU(s5pc100, S5PC100_CPU_ID, S5PC100_CPU_MASK)
 IS_SAMSUNG_CPU(s5pv210, S5PV210_CPU_ID, S5PV210_CPU_MASK)
+IS_SAMSUNG_CPU(exynos3475, EXYNOS3475_SOC_ID, EXYNOS3_SOC_MASK)
 IS_SAMSUNG_CPU(exynos4210, EXYNOS4210_CPU_ID, EXYNOS4_CPU_MASK)
 IS_SAMSUNG_CPU(exynos4212, EXYNOS4212_CPU_ID, EXYNOS4_CPU_MASK)
 IS_SAMSUNG_CPU(exynos4412, EXYNOS4412_CPU_ID, EXYNOS4_CPU_MASK)
 IS_SAMSUNG_CPU(exynos5250, EXYNOS5250_SOC_ID, EXYNOS5_SOC_MASK)
+IS_SAMSUNG_CPU(exynos5422, EXYNOS5422_SOC_ID, EXYNOS5_SOC_MASK)
+IS_SAMSUNG_CPU(exynos5430, EXYNOS5430_SOC_ID, EXYNOS5_SOC_MASK)
+IS_SAMSUNG_CPU(exynos5433, EXYNOS5433_SOC_ID, EXYNOS5_SOC_MASK)
 IS_SAMSUNG_CPU(exynos5440, EXYNOS5440_SOC_ID, EXYNOS5_SOC_MASK)
 
 #if defined(CONFIG_CPU_S3C2410) || defined(CONFIG_CPU_S3C2412) || \
@@ -114,6 +128,12 @@ IS_SAMSUNG_CPU(exynos5440, EXYNOS5440_SOC_ID, EXYNOS5_SOC_MASK)
 # define soc_is_s5pv210()	0
 #endif
 
+#if defined(CONFIG_SOC_EXYNOS3475)
+# define soc_is_exynos3475()	is_samsung_exynos3475()
+#else
+# define soc_is_exynos3475()	0
+#endif
+
 #if defined(CONFIG_CPU_EXYNOS4210)
 # define soc_is_exynos4210()	is_samsung_exynos4210()
 #else
@@ -142,11 +162,41 @@ IS_SAMSUNG_CPU(exynos5440, EXYNOS5440_SOC_ID, EXYNOS5_SOC_MASK)
 # define soc_is_exynos5250()	0
 #endif
 
+#if defined(CONFIG_SOC_EXYNOS5422)
+# define soc_is_exynos5422()	is_samsung_exynos5422()
+#else
+# define soc_is_exynos5422()	0
+#endif
+
+#if defined(CONFIG_SOC_EXYNOS5430)
+# define soc_is_exynos5430()	is_samsung_exynos5430()
+#else
+# define soc_is_exynos5430()	0
+#endif
+
+#define EXYNOS5430_REV_1_0	(0x10)
+
+#if defined(CONFIG_SOC_EXYNOS5433)
+# define soc_is_exynos5433()	is_samsung_exynos5433()
+#else
+# define soc_is_exynos5433()	0
+#endif
+
+#define EXYNOS5433_REV_0	(0x0)
+#define EXYNOS5433_REV_1_0	(0x10)
+#define EXYNOS5433_REV_1_1	(0x11)
+
 #if defined(CONFIG_SOC_EXYNOS5440)
 # define soc_is_exynos5440()	is_samsung_exynos5440()
 #else
 # define soc_is_exynos5440()	0
 #endif
+
+extern unsigned int samsung_chip_id[2];
+
+#define CHIPID0_OFFSET		(0x14)
+#define CHIPID1_OFFSET		(0x18)
+#define CHIPID_SIZE		(12)
 
 #define IODESC_ENT(x) { (unsigned long)S3C24XX_VA_##x, __phys_to_pfn(S3C24XX_PA_##x), S3C24XX_SZ_##x, MT_DEVICE }
 

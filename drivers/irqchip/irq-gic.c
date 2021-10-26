@@ -250,11 +250,27 @@ static int gic_set_affinity(struct irq_data *d, const struct cpumask *mask_val,
 	unsigned int cpu = cpumask_any_and(mask_val, cpu_online_mask);
 	u32 val, mask, bit;
 
-	if (cpu >= NR_GIC_CPU_IF || cpu >= nr_cpu_ids)
-		return -EINVAL;
-
 	mask = 0xff << shift;
-	bit = gic_cpu_map[cpu] << shift;
+
+	if (unlikely(d->state_use_accessors & IRQD_GIC_MULTI_TARGET)) {
+		struct cpumask temp_mask;
+
+		bit = 0;
+		if (!cpumask_and(&temp_mask, mask_val, cpu_online_mask))
+			return -EINVAL;
+
+		for_each_cpu_mask(cpu, temp_mask) {
+			if (cpu >= NR_GIC_CPU_IF || cpu >= nr_cpu_ids)
+				return -EINVAL;
+			bit |= gic_cpu_map[cpu];
+		}
+		bit <<= shift;
+	} else {
+		if (cpu >= NR_GIC_CPU_IF || cpu >= nr_cpu_ids)
+			return -EINVAL;
+
+		bit = gic_cpu_map[cpu] << shift;
+	}
 
 	raw_spin_lock(&irq_controller_lock);
 	val = readl_relaxed(reg) & ~mask;
@@ -335,6 +351,8 @@ static void gic_handle_cascade_irq(unsigned int irq, struct irq_desc *desc)
 
 static struct irq_chip gic_chip = {
 	.name			= "GIC",
+	.irq_disable		= gic_mask_irq,
+	.irq_enable		= gic_unmask_irq,
 	.irq_mask		= gic_mask_irq,
 	.irq_unmask		= gic_unmask_irq,
 	.irq_eoi		= gic_eoi_irq,

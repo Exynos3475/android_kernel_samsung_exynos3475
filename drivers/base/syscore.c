@@ -10,6 +10,7 @@
 #include <linux/mutex.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
+#include <linux/exynos-ss.h>
 
 static LIST_HEAD(syscore_ops_list);
 static DEFINE_MUTEX(syscore_ops_lock);
