@@ -11,18 +11,19 @@
 
 /* 0x139B_0000 (ALIVE): gpa0~1, gpq0 */
 &pinctrl_0 {
-	pinctrl-names = "default";
+	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&initial0>;
+	pinctrl-1 = <&sleep0>;
 	initial0: initial-state {
 		PIN_OUT_SET(gpa0-5, 0, LV1);	/* MOT_LDO_EN */
 		PIN_IN(gpa1-0, NONE, LV1);	/* ACC_INT_N */
 		PIN_IN(gpq0-0, DOWN, LV1);	/* NC */
 	};
-	/*
-	 * Note:
-	 *   Please do not make "sleep-state" node for ALIVE group GPIOs.
-	 *   ALIVE group doesn't have power-down register.
-	 */
+	sleep0: sleep-state {
+		PIN_SLP(gpa0-4, INPUT, DOWN);	/* GPIO_CAM_AVDD_EN */
+		PIN_SLP(gpa0-5, INPUT, DOWN);	/* MOT_LDO_EN */
+		PIN_SLP(gpq0-1, INPUT, DOWN);	/* NC */
+	};
 };
 
 /* 0x148F_0000 (DISPAUD, Display and Audio): gpz0~1 */
