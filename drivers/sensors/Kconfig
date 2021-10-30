@@ -92,6 +92,13 @@ config SENSORS_CM36672P_SMART_PERS
 	help
 	  This option enables smart persistence option using optical sensor driver.
 
+config SENSORS_CM36672P_LDO_EN
+	depends on SENSORS_CM36672P
+	tristate "VDD_EN controlled by GPIO"
+	default n
+	help
+	  This option enables vdd_en controlled by GPIO using optical sensor driver.
+
 config SENSORS_CM36652
 	depends on I2C
 	tristate "CM366852 driver"
