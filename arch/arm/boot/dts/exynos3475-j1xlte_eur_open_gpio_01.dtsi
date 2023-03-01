@@ -21,7 +21,6 @@
 		PIN_IN(gpq0-0, DOWN, LV1);	/* NC */
 	};
 	sleep0: sleep-state {
-		PIN_SLP(gpa0-4, INPUT, DOWN);	/* GPIO_CAM_AVDD_EN */
 		PIN_SLP(gpa0-5, INPUT, DOWN);	/* MOT_LDO_EN */
 	};
 };
@@ -153,7 +152,7 @@
 
 		PIN_SLP(gpe0-0, INPUT, DOWN);	/* MAIN_CAM_MCLK */
 		PIN_SLP(gpe0-1, INPUT, DOWN);	/* VT_CAM_MCLK */
-		PIN_SLP(gpe0-2, INPUT, NONE);	/* TOUCH_KEY_INT */
+		PIN_SLP(gpe0-2, INPUT, DOWN);	/* GPIO_CAM_AVDD_EN */
 
 		PIN_SLP(gpf0-0, INPUT, DOWN);	/* CAM_I2C_SDA */
 		PIN_SLP(gpf0-1, INPUT, DOWN);	/* CAM_I2C_SCL */
